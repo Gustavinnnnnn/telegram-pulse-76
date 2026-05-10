@@ -1,21 +1,26 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Megaphone, PlusCircle, Wallet, Settings, Send } from "lucide-react";
+import { LayoutDashboard, Megaphone, PlusCircle, Wallet, Settings, Send, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useProfile } from "@/lib/queries";
+import { useAuth } from "@/contexts/AuthContext";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/campaigns", label: "Campanhas", icon: Megaphone },
   { to: "/campaigns/new", label: "Criar", icon: PlusCircle },
   { to: "/wallet", label: "Carteira", icon: Wallet },
-  { to: "/settings", label: "Configurações", icon: Settings },
+  { to: "/settings", label: "Ajustes", icon: Settings },
 ] as const;
 
 export function AppLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { data: profile } = useProfile();
+  const { signOut, user } = useAuth();
+  const balance = Number(profile?.balance ?? 0);
+  const initial = (profile?.display_name || user?.email || "U").charAt(0).toUpperCase();
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Sidebar (desktop) */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar md:flex">
         <div className="flex h-16 items-center gap-3 px-6">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-primary glow-primary">
@@ -41,7 +46,7 @@ export function AppLayout() {
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )}
               >
-                <Icon className={cn("h-4.5 w-4.5 transition-transform group-hover:scale-110", active && "text-primary")} />
+                <Icon className="h-4.5 w-4.5 transition-transform group-hover:scale-110" />
                 <span>{item.label}</span>
               </Link>
             );
@@ -49,7 +54,7 @@ export function AppLayout() {
         </nav>
         <div className="m-3 rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">Saldo disponível</p>
-          <p className="mt-1 text-xl font-bold text-gradient-primary">R$ 1.247,80</p>
+          <p className="mt-1 text-xl font-bold text-gradient-primary">R$ {balance.toFixed(2)}</p>
           <Link
             to="/wallet"
             className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:brightness-110"
@@ -59,7 +64,6 @@ export function AppLayout() {
         </div>
       </aside>
 
-      {/* Main */}
       <div className="md:pl-64">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur md:px-8">
           <div className="flex items-center gap-3 md:hidden">
@@ -69,16 +73,23 @@ export function AppLayout() {
             <span className="font-bold">TeleAds</span>
           </div>
           <div className="hidden md:block">
-            <p className="text-xs text-muted-foreground">Bem-vindo de volta</p>
-            <p className="text-sm font-semibold">Painel de campanhas</p>
+            <p className="text-xs text-muted-foreground">Bem-vindo</p>
+            <p className="text-sm font-semibold">{profile?.display_name || user?.email}</p>
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium md:block">
               <span className="text-muted-foreground">Saldo: </span>
-              <span className="text-gradient-primary font-bold">R$ 1.247,80</span>
+              <span className="text-gradient-primary font-bold">R$ {balance.toFixed(2)}</span>
             </div>
+            <button
+              onClick={() => signOut()}
+              title="Sair"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-destructive"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary-glow text-sm font-bold text-primary-foreground">
-              U
+              {initial}
             </div>
           </div>
         </header>
@@ -88,7 +99,6 @@ export function AppLayout() {
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-sidebar-border bg-sidebar/95 backdrop-blur md:hidden">
         <ul className="grid grid-cols-5">
           {nav.map((item) => {
