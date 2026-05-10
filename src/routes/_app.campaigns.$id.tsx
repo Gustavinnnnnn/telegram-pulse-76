@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-r
 import { useMemo, useState } from "react";
 import {
   ArrowLeft, Eye, MousePointerClick, TrendingUp, Users, Target, MessageCircle,
-  Ban, CheckCircle2, AlertTriangle, Activity, Wallet, Send, Pause, Play,
+  Ban, CheckCircle2, AlertTriangle, Activity, Wallet, Send, Pause, Play, Copy, Trash2,
 } from "lucide-react";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer,
@@ -10,11 +10,15 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/StatusBadge";
-import { StatCard } from "@/components/StatCard";
+import { MetricTile } from "@/components/MetricTile";
+import { TelegramAdPreview } from "@/components/TelegramAdPreview";
+import { QualityScore } from "@/components/QualityScore";
 import {
-  useCampaigns, objectiveLabels, nicheLabels, statusLabels, useUpdateCampaignStatus,
+  useCampaigns, objectiveLabels, nicheLabels, useUpdateCampaignStatus,
 } from "@/lib/queries";
 import { generateMetrics, statusColor, statusLabelRecipient } from "@/lib/fake-metrics";
+import { compactNumber, currency, gradientForName, shortId } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/campaigns/$id")({
   component: CampaignDetailPage,
@@ -28,19 +32,18 @@ function CampaignDetailPage() {
   const updateStatus = useUpdateCampaignStatus();
   const [tab, setTab] = useState<"overview" | "delivery" | "audience" | "recipients">("overview");
 
-  const metrics = useMemo(() => (campaign ? generateMetrics(campaign) : null), [campaign]);
+  const m = useMemo(() => (campaign ? generateMetrics(campaign) : null), [campaign]);
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
-  if (!campaign || !metrics) {
+  if (isLoading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+  if (!campaign || !m) {
     return (
-      <div className="card-elevated p-8 text-center">
+      <div className="tile p-8 text-center">
         <p className="text-sm">Campanha não encontrada</p>
         <Link to="/campaigns" className="mt-3 inline-block text-sm font-semibold text-primary">Voltar</Link>
       </div>
     );
   }
 
-  const m = metrics;
   const isActive = campaign.status === "active";
   const isDraft = campaign.status === "draft";
 
@@ -54,7 +57,7 @@ function CampaignDetailPage() {
     }
   };
 
-  const PIE_COLORS = ["oklch(0.7 0.16 155)", "oklch(0.68 0.14 230)", "oklch(0.62 0.22 25)", "oklch(0.68 0.02 240)"];
+  const PIE_COLORS = ["oklch(0.78 0.18 158)", "oklch(0.69 0.15 230)", "oklch(0.66 0.22 22)", "oklch(0.62 0.02 235)"];
   const deliveryPie = [
     { name: "Entregues", value: m.dmsReceived },
     { name: "Respondidas", value: Math.floor(m.dmsReceived * 0.18) },
@@ -63,139 +66,178 @@ function CampaignDetailPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => navigate({ to: "/campaigns" })}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-xl font-bold md:text-2xl">{campaign.name}</h1>
-            <StatusBadge status={campaign.status} />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {objectiveLabels[campaign.objective]} · {nicheLabels[campaign.niche]} · Criada em {new Date(campaign.created_at).toLocaleDateString("pt-BR")}
-          </p>
-        </div>
-        {!isDraft && (
           <button
-            onClick={handleToggle}
-            disabled={updateStatus.isPending}
-            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold transition hover:border-primary disabled:opacity-50"
+            onClick={() => navigate({ to: "/campaigns" })}
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground transition hover:text-foreground"
           >
-            {isActive ? <><Pause className="h-3.5 w-3.5" /> Pausar</> : <><Play className="h-3.5 w-3.5" /> Ativar</>}
+            <ArrowLeft className="h-3 w-3" /> Campanhas
           </button>
-        )}
+          <div className="mt-1.5 flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/30 to-cyan/20 text-base font-bold text-primary">
+              {campaign.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="truncate font-display text-xl font-bold md:text-2xl">{campaign.name}</h1>
+                <StatusBadge status={campaign.status} />
+              </div>
+              <p className="text-[11.5px] text-muted-foreground">
+                {objectiveLabels[campaign.objective]} · {nicheLabels[campaign.niche]} · ID #{shortId(campaign.id)} · criada em {new Date(campaign.created_at).toLocaleDateString("pt-BR")}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {!isDraft && (
+            <button
+              onClick={handleToggle}
+              disabled={updateStatus.isPending}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11.5px] font-semibold transition disabled:opacity-50",
+                isActive
+                  ? "border-warning/40 bg-warning/10 text-warning hover:bg-warning/20"
+                  : "border-success/40 bg-success/10 text-success hover:bg-success/20",
+              )}
+            >
+              {isActive ? <><Pause className="h-3 w-3" /> Pausar</> : <><Play className="h-3 w-3" /> Ativar</>}
+            </button>
+          )}
+          <button className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-surface-1/60 px-3 py-1.5 text-[11.5px] font-semibold transition hover:bg-surface-2">
+            <Copy className="h-3 w-3" /> Duplicar
+          </button>
+          <button className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-1.5 text-[11.5px] font-semibold text-destructive transition hover:bg-destructive/20">
+            <Trash2 className="h-3 w-3" />
+          </button>
+        </div>
       </div>
 
+      {/* KPIs */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Impressões" value={m.impressions.toLocaleString("pt-BR")} icon={Eye} />
-        <StatCard label="Alcance" value={m.reach.toLocaleString("pt-BR")} icon={Users} />
-        <StatCard label="Cliques" value={m.clicks.toLocaleString("pt-BR")} icon={MousePointerClick} />
-        <StatCard label="CTR" value={`${m.ctr}%`} icon={TrendingUp} />
+        <MetricTile label="Impressões" value={m.impressions} icon={Eye} delta={9.2} accent="primary" />
+        <MetricTile label="Alcance" value={m.reach} icon={Users} delta={6.8} accent="cyan" />
+        <MetricTile label="Cliques" value={m.clicks} icon={MousePointerClick} delta={14.1} accent="warning" />
+        <MetricTile label="CTR" value={m.ctr} format="percent" icon={TrendingUp} accent="magenta" />
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Conversões" value={m.conversions.toLocaleString("pt-BR")} icon={Target} />
-        <StatCard label="CPC" value={`R$ ${m.cpc.toFixed(2)}`} icon={Activity} />
-        <StatCard label="CPM" value={`R$ ${m.cpm.toFixed(2)}`} icon={TrendingUp} />
-        <StatCard label="Investido" value={`R$ ${m.spent.toFixed(2)}`} icon={Wallet} />
+        <MetricTile label="Conversões" value={m.conversions} icon={Target} delta={23.4} accent="primary" />
+        <MetricTile label="CPC" value={m.cpc} format="currency" icon={Activity} accent="cyan" />
+        <MetricTile label="CPM" value={m.cpm} format="currency" icon={TrendingUp} accent="warning" />
+        <MetricTile label="Investido" value={m.spent} format="currency" icon={Wallet} delta={-2.1} accent="magenta" />
       </div>
 
-      <div className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1">
+      {/* Tabs */}
+      <div className="inline-flex gap-1 rounded-xl border border-border/60 bg-surface-1/60 p-1">
         {([
-          { k: "overview", label: "Visão geral" },
-          { k: "delivery", label: "Entrega" },
-          { k: "audience", label: "Público" },
-          { k: "recipients", label: "Destinatários" },
+          { k: "overview", l: "Visão geral" },
+          { k: "delivery", l: "Entrega" },
+          { k: "audience", l: "Público" },
+          { k: "recipients", l: "Destinatários" },
         ] as const).map((t) => (
           <button
             key={t.k}
             onClick={() => setTab(t.k)}
-            className={
-              "whitespace-nowrap rounded-lg px-4 py-2 text-xs font-semibold transition " +
-              (tab === t.k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")
-            }
+            className={cn(
+              "rounded-lg px-3.5 py-1.5 text-[11.5px] font-semibold transition",
+              tab === t.k ? "gradient-primary text-white" : "text-muted-foreground hover:text-foreground",
+            )}
           >
-            {t.label}
+            {t.l}
           </button>
         ))}
       </div>
 
       {tab === "overview" && (
         <>
-          <div className="grid gap-4 lg:grid-cols-3">
-            <div className="card-elevated p-5 lg:col-span-2">
+          <div className="grid gap-4 lg:grid-cols-12">
+            <div className="tile p-5 lg:col-span-8">
               <div className="flex items-end justify-between">
                 <div>
-                  <h2 className="text-base font-bold">Desempenho — últimas 24h</h2>
-                  <p className="text-xs text-muted-foreground">Impressões e cliques por hora</p>
+                  <h2 className="font-display text-base font-bold">Performance — últimas 24h</h2>
+                  <p className="text-[11px] text-muted-foreground">Impressões e cliques por hora</p>
                 </div>
-                <div className="flex gap-3 text-[11px]">
+                <div className="flex gap-3 text-[10.5px]">
                   <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" />Impressões</span>
-                  <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-success" />Cliques</span>
+                  <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-cyan" />Cliques</span>
                 </div>
               </div>
-              <div className="mt-4 h-64">
+              <div className="mt-4 h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={m.hourly}>
+                  <AreaChart data={m.hourly} margin={{ top: 5, right: 8, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="ga" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="oklch(0.68 0.14 230)" stopOpacity={0.55} />
-                        <stop offset="95%" stopColor="oklch(0.68 0.14 230)" stopOpacity={0} />
+                        <stop offset="0%" stopColor="oklch(0.69 0.15 230)" stopOpacity={0.55} />
+                        <stop offset="100%" stopColor="oklch(0.69 0.15 230)" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="gb" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="oklch(0.7 0.16 155)" stopOpacity={0.5} />
-                        <stop offset="95%" stopColor="oklch(0.7 0.16 155)" stopOpacity={0} />
+                        <stop offset="0%" stopColor="oklch(0.84 0.16 178)" stopOpacity={0.5} />
+                        <stop offset="100%" stopColor="oklch(0.84 0.16 178)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.02 240)" />
-                    <XAxis dataKey="hour" stroke="oklch(0.68 0.02 240)" fontSize={11} />
-                    <YAxis stroke="oklch(0.68 0.02 240)" fontSize={11} />
-                    <Tooltip contentStyle={{ backgroundColor: "oklch(0.23 0.025 240)", border: "1px solid oklch(0.3 0.02 240)", borderRadius: "12px", fontSize: "12px" }} />
-                    <Area type="monotone" dataKey="impressions" stroke="oklch(0.68 0.14 230)" strokeWidth={2} fill="url(#ga)" />
-                    <Area type="monotone" dataKey="clicks" stroke="oklch(0.7 0.16 155)" strokeWidth={2} fill="url(#gb)" />
+                    <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.3 0.02 240 / 0.4)" />
+                    <XAxis dataKey="hour" stroke="oklch(0.62 0.02 235)" fontSize={10} axisLine={false} tickLine={false} interval={2} />
+                    <YAxis stroke="oklch(0.62 0.02 235)" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => compactNumber(v)} />
+                    <Tooltip contentStyle={{ backgroundColor: "oklch(0.235 0.026 236)", border: "1px solid oklch(0.38 0.025 234)", borderRadius: "12px", fontSize: "11px" }} />
+                    <Area type="monotone" dataKey="impressions" stroke="oklch(0.69 0.15 230)" strokeWidth={2} fill="url(#ga)" />
+                    <Area type="monotone" dataKey="clicks" stroke="oklch(0.84 0.16 178)" strokeWidth={2} fill="url(#gb)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            <div className="card-elevated p-5">
-              <h2 className="text-base font-bold">Qualidade da entrega</h2>
-              <div className="mt-4 space-y-4">
-                <Quality label="Taxa de aprovação" value={m.approvalRate} icon={CheckCircle2} color="text-success" />
-                <Quality label="Qualidade do público" value={m.audienceQuality} icon={Users} color="text-primary" />
-                <Quality label="Frequência (impr/usuário)" value={m.frequency} suffix="x" icon={Activity} color="text-warning" />
+            <div className="tile p-5 lg:col-span-4">
+              <h2 className="font-display text-base font-bold">Qualidade</h2>
+              <p className="text-[11px] text-muted-foreground">Indicadores de entrega</p>
+              <div className="mt-3 flex items-center justify-around">
+                <div className="text-center">
+                  <QualityScore value={m.approvalRate} label="aprovação" />
+                </div>
+                <div className="text-center">
+                  <QualityScore value={m.audienceQuality} label="público" />
+                </div>
               </div>
-              <div className="mt-5 rounded-xl bg-background/40 p-4">
-                <p className="text-[11px] uppercase text-muted-foreground">Custo por conversão</p>
-                <p className="mt-1 text-2xl font-bold text-gradient-primary">R$ {m.costPerConversion.toFixed(2)}</p>
-                <p className="text-[11px] text-muted-foreground">{m.conversions} conversões realizadas</p>
+              <div className="mt-3 rounded-xl border border-border/40 bg-surface-1/60 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Custo por conversão</p>
+                <p className="mt-0.5 font-display text-2xl font-bold tabular text-gradient-mint">{currency(m.costPerConversion)}</p>
+                <p className="text-[10.5px] text-muted-foreground">{m.conversions} conversões realizadas</p>
               </div>
             </div>
           </div>
 
-          <div className="card-elevated p-5">
-            <h2 className="text-base font-bold">Investimento por dia (últimos 7 dias)</h2>
-            <div className="mt-4 h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={m.daily}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.02 240)" />
-                  <XAxis dataKey="day" stroke="oklch(0.68 0.02 240)" fontSize={11} />
-                  <YAxis stroke="oklch(0.68 0.02 240)" fontSize={11} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "oklch(0.23 0.025 240)", border: "1px solid oklch(0.3 0.02 240)", borderRadius: "12px", fontSize: "12px" }}
-                    formatter={(v: number) => [`R$ ${v.toFixed(2)}`, "Gasto"]}
-                  />
-                  <Bar dataKey="spent" fill="oklch(0.68 0.14 230)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+          <div className="grid gap-4 lg:grid-cols-12">
+            <div className="tile p-5 lg:col-span-7">
+              <h2 className="font-display text-base font-bold">Investimento por dia</h2>
+              <p className="text-[11px] text-muted-foreground">Últimos 7 dias</p>
+              <div className="mt-3 h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={m.daily} margin={{ top: 5, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.3 0.02 240 / 0.4)" />
+                    <XAxis dataKey="day" stroke="oklch(0.62 0.02 235)" fontSize={11} axisLine={false} tickLine={false} />
+                    <YAxis stroke="oklch(0.62 0.02 235)" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => `R$${compactNumber(v)}`} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "oklch(0.235 0.026 236)", border: "1px solid oklch(0.38 0.025 234)", borderRadius: "12px", fontSize: "11px" }}
+                      formatter={(v: number) => [currency(v), "Gasto"]}
+                    />
+                    <Bar dataKey="spent" fill="oklch(0.69 0.15 230)" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Criativo publicado</p>
+              <TelegramAdPreview
+                channelName={campaign.name}
+                channelHandle="@telegram_ads"
+                text={campaign.text}
+                description={campaign.description ?? undefined}
+                buttonLabel={campaign.button_label}
+              />
             </div>
           </div>
-
-          <CreativePreview campaign={campaign} />
         </>
       )}
 
@@ -209,48 +251,48 @@ function CampaignDetailPage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="card-elevated p-5">
-              <h2 className="text-base font-bold">Distribuição da entrega</h2>
-              <div className="mt-4 h-64">
+            <div className="tile p-5">
+              <h2 className="font-display text-base font-bold">Distribuição da entrega</h2>
+              <div className="mt-4 h-[240px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={deliveryPie} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={3}>
+                    <Pie data={deliveryPie} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={3} stroke="none">
                       {deliveryPie.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: "oklch(0.23 0.025 240)", border: "1px solid oklch(0.3 0.02 240)", borderRadius: "12px", fontSize: "12px" }} />
+                    <Tooltip contentStyle={{ backgroundColor: "oklch(0.235 0.026 236)", border: "1px solid oklch(0.38 0.025 234)", borderRadius: "12px", fontSize: "11px" }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
                 {deliveryPie.map((d, i) => (
                   <div key={d.name} className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full" style={{ background: PIE_COLORS[i] }} />
                     <span className="text-muted-foreground">{d.name}</span>
-                    <span className="ml-auto font-semibold">{d.value.toLocaleString("pt-BR")}</span>
+                    <span className="ml-auto tabular font-semibold">{compactNumber(d.value)}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="card-elevated p-5">
-              <h2 className="text-base font-bold">Top canais</h2>
-              <p className="text-xs text-muted-foreground">Onde sua campanha mais performou</p>
-              <ul className="mt-4 space-y-3">
-                {m.channels.map((ch) => (
-                  <li key={ch.name} className="rounded-xl border border-border bg-background/40 p-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <p className="font-semibold">{ch.name}</p>
-                      <span className="text-xs text-muted-foreground">{ch.clicks} cliques</span>
-                    </div>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full gradient-primary"
-                        style={{ width: `${Math.min(100, (ch.impressions / Math.max(...m.channels.map(c => c.impressions), 1)) * 100)}%` }}
-                      />
-                    </div>
-                    <p className="mt-1 text-[10px] text-muted-foreground">{ch.impressions.toLocaleString("pt-BR")} impressões</p>
-                  </li>
-                ))}
+            <div className="tile p-5">
+              <h2 className="font-display text-base font-bold">Top canais</h2>
+              <p className="text-[11px] text-muted-foreground">Onde sua campanha mais performou</p>
+              <ul className="mt-3 space-y-2">
+                {m.channels.map((ch) => {
+                  const max = Math.max(...m.channels.map((c) => c.impressions), 1);
+                  return (
+                    <li key={ch.name} className="rounded-xl border border-border/40 bg-surface-1/40 p-3">
+                      <div className="flex items-center justify-between text-[12px]">
+                        <p className="font-semibold">{ch.name}</p>
+                        <span className="text-[10.5px] tabular text-muted-foreground">{compactNumber(ch.clicks)} cliques</span>
+                      </div>
+                      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-3/60">
+                        <div className="h-full gradient-primary" style={{ width: `${(ch.impressions / max) * 100}%` }} />
+                      </div>
+                      <p className="mt-1 text-[10px] tabular text-muted-foreground">{compactNumber(ch.impressions)} impressões</p>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </div>
@@ -259,35 +301,35 @@ function CampaignDetailPage() {
 
       {tab === "audience" && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="card-elevated p-5">
-            <h2 className="text-base font-bold">Faixa etária</h2>
+          <div className="tile p-5">
+            <h2 className="font-display text-base font-bold">Faixa etária</h2>
             <div className="mt-4 space-y-3">
               {m.demographics.map((d) => (
                 <div key={d.label}>
-                  <div className="mb-1 flex justify-between text-xs">
+                  <div className="mb-1 flex justify-between text-[11px]">
                     <span className="text-muted-foreground">{d.label} anos</span>
-                    <span className="font-semibold">{d.value}%</span>
+                    <span className="tabular font-semibold">{d.value}%</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                  <div className="h-2 overflow-hidden rounded-full bg-surface-3/60">
                     <div className="h-full gradient-primary" style={{ width: `${d.value}%` }} />
                   </div>
                 </div>
               ))}
             </div>
           </div>
-          <div className="card-elevated p-5">
-            <h2 className="text-base font-bold">Dispositivo</h2>
-            <div className="mt-4 h-64">
+          <div className="tile p-5">
+            <h2 className="font-display text-base font-bold">Dispositivos</h2>
+            <div className="mt-4 h-[240px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={m.devices} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.02 240)" />
-                  <XAxis type="number" stroke="oklch(0.68 0.02 240)" fontSize={11} />
-                  <YAxis dataKey="label" type="category" stroke="oklch(0.68 0.02 240)" fontSize={11} width={70} />
+                <BarChart data={m.devices} layout="vertical" margin={{ top: 0, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.3 0.02 240 / 0.4)" />
+                  <XAxis type="number" stroke="oklch(0.62 0.02 235)" fontSize={10} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="label" type="category" stroke="oklch(0.62 0.02 235)" fontSize={11} axisLine={false} tickLine={false} width={70} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "oklch(0.23 0.025 240)", border: "1px solid oklch(0.3 0.02 240)", borderRadius: "12px", fontSize: "12px" }}
+                    contentStyle={{ backgroundColor: "oklch(0.235 0.026 236)", border: "1px solid oklch(0.38 0.025 234)", borderRadius: "12px", fontSize: "11px" }}
                     formatter={(v: number) => [`${v}%`, "Share"]}
                   />
-                  <Bar dataKey="value" fill="oklch(0.7 0.16 155)" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="value" fill="oklch(0.84 0.16 178)" radius={[0, 6, 6, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -296,27 +338,30 @@ function CampaignDetailPage() {
       )}
 
       {tab === "recipients" && (
-        <div className="card-elevated p-5">
+        <div className="tile p-5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold">Quem recebeu sua mensagem</h2>
-              <p className="text-xs text-muted-foreground">Últimos {m.recipients.length} usuários alcançados (atualização ao vivo)</p>
+              <h2 className="font-display text-base font-bold">Quem recebeu sua mensagem</h2>
+              <p className="text-[11px] text-muted-foreground">Atualização ao vivo · {m.recipients.length} usuários alcançados</p>
             </div>
-            <span className="flex items-center gap-1.5 rounded-full bg-success/15 px-2.5 py-1 text-[11px] font-semibold text-success">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" /> ao vivo
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-2.5 py-1 text-[10.5px] font-bold text-success">
+              <span className="dot-live !h-1.5 !w-1.5" /> ao vivo
             </span>
           </div>
-          <ul className="mt-4 divide-y divide-border">
+          <ul className="mt-3 space-y-1.5">
             {m.recipients.map((r) => (
-              <li key={r.id} className="flex items-center gap-3 py-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/30 to-primary/10 text-lg">
-                  {r.avatar}
-                </div>
+              <li key={r.id} className="flex items-center gap-3 rounded-xl border border-border/40 bg-surface-1/40 p-2.5 transition hover:bg-surface-1/80">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                  style={{ background: gradientForName(r.name) }}
+                >
+                  {r.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{r.name}</p>
-                  <p className="truncate text-[11px] text-muted-foreground">{r.username} · {r.time}</p>
+                  <p className="truncate text-[12.5px] font-semibold">{r.name}</p>
+                  <p className="truncate text-[10.5px] text-muted-foreground">{r.username} · {r.time}</p>
                 </div>
-                <span className={`flex items-center gap-1.5 text-xs font-semibold ${statusColor[r.status]}`}>
+                <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold ${statusColor[r.status]}`}>
                   {r.status === "received" && <CheckCircle2 className="h-3.5 w-3.5" />}
                   {r.status === "replied" && <MessageCircle className="h-3.5 w-3.5" />}
                   {r.status === "blocked" && <Ban className="h-3.5 w-3.5" />}
@@ -332,65 +377,14 @@ function CampaignDetailPage() {
   );
 }
 
-function StatusLabelText({ status }: { status: string }) {
-  return <span>{statusLabels[status as keyof typeof statusLabels] ?? status}</span>;
-}
-
-function Quality({ label, value, suffix = "%", icon: Icon, color }: { label: string; value: number; suffix?: string; icon: typeof CheckCircle2; color: string }) {
-  return (
-    <div>
-      <div className="mb-1.5 flex items-center justify-between">
-        <span className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Icon className={`h-3.5 w-3.5 ${color}`} /> {label}
-        </span>
-        <span className="text-sm font-bold">{value}{suffix}</span>
-      </div>
-      <div className="h-2 overflow-hidden rounded-full bg-muted">
-        <div className="h-full gradient-primary" style={{ width: `${Math.min(100, suffix === "x" ? value * 25 : value)}%` }} />
-      </div>
-    </div>
-  );
-}
-
 function DeliveryCard({ label, value, icon: Icon, color }: { label: string; value: number; icon: typeof Send; color: string }) {
   return (
-    <div className="card-elevated p-4">
+    <div className="tile p-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <Icon className={`h-4 w-4 ${color}`} />
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</span>
+        <Icon className={`h-3.5 w-3.5 ${color}`} />
       </div>
-      <p className="mt-2 text-2xl font-bold">{value.toLocaleString("pt-BR")}</p>
+      <p className="mt-2 font-display text-2xl font-bold tabular">{compactNumber(value)}</p>
     </div>
   );
 }
-
-function CreativePreview({ campaign }: { campaign: ReturnType<typeof useCampaigns>["data"] extends (infer U)[] | undefined ? U : never }) {
-  return (
-    <div className="card-elevated p-5">
-      <h2 className="text-base font-bold">Pré-visualização do anúncio</h2>
-      <p className="text-xs text-muted-foreground">Como ele aparece no Telegram</p>
-      <div className="mt-4 mx-auto max-w-sm rounded-2xl bg-[oklch(0.16_0.02_240)] p-4 shadow-2xl">
-        <div className="rounded-xl bg-[oklch(0.22_0.025_240)] p-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full gradient-primary">
-              <Send className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">Patrocinado</p>
-              <p className="text-[10px] text-muted-foreground">via TeleAds</p>
-            </div>
-          </div>
-          <p className="mt-3 text-sm font-semibold">{campaign.text || "Sua chamada principal aparece aqui"}</p>
-          {campaign.description && <p className="mt-1 text-xs text-muted-foreground">{campaign.description}</p>}
-          {campaign.button_label && (
-            <button className="mt-3 w-full rounded-lg gradient-primary py-2 text-xs font-semibold text-primary-foreground">
-              {campaign.button_label}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-void StatusLabelText;
