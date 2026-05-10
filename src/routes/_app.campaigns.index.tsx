@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Plus, Megaphone } from "lucide-react";
+import { Search, Plus, Megaphone, ArrowUpRight } from "lucide-react";
 import { useState } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useCampaigns, objectiveLabels, nicheLabels } from "@/lib/queries";
+import { generateMetrics } from "@/lib/fake-metrics";
 
 export const Route = createFileRoute("/_app/campaigns/")({
   component: CampaignsPage,
@@ -10,7 +11,7 @@ export const Route = createFileRoute("/_app/campaigns/")({
 
 function CampaignsPage() {
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "active" | "paused">("all");
+  const [filter, setFilter] = useState<"all" | "active" | "paused" | "draft">("all");
   const { data: campaigns = [], isLoading } = useCampaigns();
 
   const filtered = campaigns.filter((c) => {
@@ -45,7 +46,7 @@ function CampaignsPage() {
           />
         </div>
         <div className="flex gap-2 rounded-xl border border-border bg-card p-1">
-          {(["all", "active", "paused"] as const).map((f) => (
+          {(["all", "active", "paused", "draft"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -54,7 +55,7 @@ function CampaignsPage() {
                 (filter === f ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")
               }
             >
-              {f === "all" ? "Todas" : f === "active" ? "Ativas" : "Pausadas"}
+              {f === "all" ? "Todas" : f === "active" ? "Ativas" : f === "paused" ? "Pausadas" : "Rascunhos"}
             </button>
           ))}
         </div>
@@ -66,46 +67,62 @@ function CampaignsPage() {
         <div className="card-elevated flex flex-col items-center gap-3 p-12 text-center">
           <Megaphone className="h-10 w-10 text-muted-foreground" />
           <p className="text-sm font-semibold">Nenhuma campanha encontrada</p>
-          <Link
-            to="/campaigns/new"
-            className="rounded-xl gradient-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-          >
+          <Link to="/campaigns/new" className="rounded-xl gradient-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
             Criar primeira campanha
           </Link>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((c) => {
-            const impressions = Number(c.impressions);
-            const clicks = Number(c.clicks);
-            const ctr = impressions > 0 ? ((clicks / impressions) * 100).toFixed(2) : "0.00";
-            const budget = Number(c.budget);
-            const spent = Number(c.spent);
-            const progress = budget > 0 ? Math.min(100, (spent / budget) * 100) : 0;
+            const m = generateMetrics(c);
+            const progress = m.budget > 0 ? Math.min(100, (m.spent / m.budget) * 100) : 0;
             return (
-              <div key={c.id} className="card-elevated p-5">
+              <Link
+                key={c.id}
+                to="/campaigns/$id"
+                params={{ id: c.id }}
+                className="card-elevated group p-5"
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h3 className="truncate text-base font-bold">{c.name}</h3>
+                    <h3 className="truncate text-base font-bold group-hover:text-primary transition">{c.name}</h3>
                     <p className="text-xs text-muted-foreground">
                       {objectiveLabels[c.objective]} · {nicheLabels[c.niche]}
                     </p>
                   </div>
-                  <StatusBadge status={c.status} />
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={c.status} />
+                    <ArrowUpRight className="h-4 w-4 text-muted-foreground transition group-hover:text-primary group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  </div>
                 </div>
 
                 <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-background/40 p-3 text-center">
                   <div>
                     <p className="text-[10px] uppercase text-muted-foreground">Impressões</p>
-                    <p className="text-sm font-bold">{impressions.toLocaleString("pt-BR")}</p>
+                    <p className="text-sm font-bold">{m.impressions.toLocaleString("pt-BR")}</p>
                   </div>
                   <div>
                     <p className="text-[10px] uppercase text-muted-foreground">Cliques</p>
-                    <p className="text-sm font-bold">{clicks.toLocaleString("pt-BR")}</p>
+                    <p className="text-sm font-bold">{m.clicks.toLocaleString("pt-BR")}</p>
                   </div>
                   <div>
                     <p className="text-[10px] uppercase text-muted-foreground">CTR</p>
-                    <p className="text-sm font-bold text-primary">{ctr}%</p>
+                    <p className="text-sm font-bold text-primary">{m.ctr}%</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
+                  <div>
+                    <p className="text-muted-foreground">DMs</p>
+                    <p className="font-semibold text-success">{m.dmsReceived.toLocaleString("pt-BR")}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Aprovação</p>
+                    <p className="font-semibold">{m.approvalRate}%</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Conv.</p>
+                    <p className="font-semibold">{m.conversions}</p>
                   </div>
                 </div>
 
@@ -113,14 +130,14 @@ function CampaignsPage() {
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">Orçamento</span>
                     <span className="font-semibold">
-                      R$ {spent.toFixed(2)} / R$ {budget.toFixed(2)}
+                      R$ {m.spent.toFixed(2)} / R$ {m.budget.toFixed(2)}
                     </span>
                   </div>
                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
                     <div className="h-full gradient-primary transition-all" style={{ width: `${progress}%` }} />
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

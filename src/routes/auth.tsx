@@ -37,7 +37,11 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Conta criada!", { description: "Verifique seu e-mail para confirmar." });
+        // Auto-confirm enabled — sign user in immediately
+        const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInErr) throw signInErr;
+        toast.success("Conta criada!");
+        navigate({ to: "/" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
