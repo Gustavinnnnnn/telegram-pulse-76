@@ -16,6 +16,7 @@ import { Route as AppWalletRouteImport } from './routes/_app.wallet'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppCampaignsIndexRouteImport } from './routes/_app.campaigns.index'
 import { Route as AppCampaignsNewRouteImport } from './routes/_app.campaigns.new'
+import { Route as AppCampaignsIdRouteImport } from './routes/_app.campaigns.$id'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -51,12 +52,18 @@ const AppCampaignsNewRoute = AppCampaignsNewRouteImport.update({
   path: '/campaigns/new',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCampaignsIdRoute = AppCampaignsIdRouteImport.update({
+  id: '/campaigns/$id',
+  path: '/campaigns/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/auth': typeof AuthRoute
   '/settings': typeof AppSettingsRoute
   '/wallet': typeof AppWalletRoute
+  '/campaigns/$id': typeof AppCampaignsIdRoute
   '/campaigns/new': typeof AppCampaignsNewRoute
   '/campaigns/': typeof AppCampaignsIndexRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/wallet': typeof AppWalletRoute
   '/': typeof AppIndexRoute
+  '/campaigns/$id': typeof AppCampaignsIdRoute
   '/campaigns/new': typeof AppCampaignsNewRoute
   '/campaigns': typeof AppCampaignsIndexRoute
 }
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/_app/wallet': typeof AppWalletRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/campaigns/$id': typeof AppCampaignsIdRoute
   '/_app/campaigns/new': typeof AppCampaignsNewRoute
   '/_app/campaigns/': typeof AppCampaignsIndexRoute
 }
@@ -85,10 +94,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/settings'
     | '/wallet'
+    | '/campaigns/$id'
     | '/campaigns/new'
     | '/campaigns/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/settings' | '/wallet' | '/' | '/campaigns/new' | '/campaigns'
+  to:
+    | '/auth'
+    | '/settings'
+    | '/wallet'
+    | '/'
+    | '/campaigns/$id'
+    | '/campaigns/new'
+    | '/campaigns'
   id:
     | '__root__'
     | '/_app'
@@ -96,6 +113,7 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/wallet'
     | '/_app/'
+    | '/_app/campaigns/$id'
     | '/_app/campaigns/new'
     | '/_app/campaigns/'
   fileRoutesById: FileRoutesById
@@ -156,6 +174,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCampaignsNewRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/campaigns/$id': {
+      id: '/_app/campaigns/$id'
+      path: '/campaigns/$id'
+      fullPath: '/campaigns/$id'
+      preLoaderRoute: typeof AppCampaignsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -163,6 +188,7 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppWalletRoute: typeof AppWalletRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppCampaignsIdRoute: typeof AppCampaignsIdRoute
   AppCampaignsNewRoute: typeof AppCampaignsNewRoute
   AppCampaignsIndexRoute: typeof AppCampaignsIndexRoute
 }
@@ -171,6 +197,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppWalletRoute: AppWalletRoute,
   AppIndexRoute: AppIndexRoute,
+  AppCampaignsIdRoute: AppCampaignsIdRoute,
   AppCampaignsNewRoute: AppCampaignsNewRoute,
   AppCampaignsIndexRoute: AppCampaignsIndexRoute,
 }
