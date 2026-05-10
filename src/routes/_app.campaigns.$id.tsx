@@ -105,7 +105,7 @@ function CampaignDetailPage() {
       </div>
 
       <div className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1">
-        {[
+        {([
           { k: "overview", label: "Visão geral" },
           { k: "delivery", label: "Entrega" },
           { k: "audience", label: "Público" },
