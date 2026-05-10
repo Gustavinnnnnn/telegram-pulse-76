@@ -65,22 +65,24 @@ export function MetricTile({ label, value, prefix = "", suffix = "", format = "c
   );
 }
 
+let __sgId = 0;
 function Sparkline({ data, stroke }: { data: number[]; stroke: string }) {
   const w = 80, h = 24;
   const min = Math.min(...data), max = Math.max(...data);
   const range = max - min || 1;
-  const step = w / (data.length - 1);
+  const step = w / Math.max(1, data.length - 1);
   const points = data.map((v, i) => `${i * step},${h - ((v - min) / range) * h}`).join(" ");
   const area = `0,${h} ${points} ${w},${h}`;
+  const gid = `sg${++__sgId}`;
   return (
     <svg width={w} height={h} className="ml-auto">
       <defs>
-        <linearGradient id={`sg-${stroke}`} x1="0" x2="0" y1="0" y2="1">
+        <linearGradient id={gid} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor={stroke} stopOpacity="0.4" />
           <stop offset="100%" stopColor={stroke} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <polygon points={area} fill={`url(#sg-${stroke})`} />
+      <polygon points={area} fill={`url(#${gid})`} />
       <polyline points={points} fill="none" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );

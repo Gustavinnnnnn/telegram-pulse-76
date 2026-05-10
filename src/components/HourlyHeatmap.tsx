@@ -43,19 +43,17 @@ export function HourlyHeatmap({ seed = "default" }: { seed?: string }) {
           {Array.from({ length: 24 }).map((_, hi) => (
             <div key={hi} className="text-center text-[8px] text-muted-foreground">{hi % 3 === 0 ? hi : ""}</div>
           ))}
-          {DAYS.map((d, di) => (
-            <>
-              <div key={`l-${d}`} className="pr-2 text-right text-[10px] font-semibold text-muted-foreground">{d}</div>
-              {cells[di].map((v, hi) => (
-                <div
-                  key={`${di}-${hi}`}
-                  className="aspect-square rounded-[3px] transition hover:scale-125"
-                  style={{ background: `oklch(0.69 0.15 230 / ${0.06 + v * 0.85})` }}
-                  title={`${d} ${hi}h — intensidade ${(v * 100).toFixed(0)}%`}
-                />
-              ))}
-            </>
-          ))}
+          {DAYS.flatMap((d, di) => [
+            <div key={`l-${d}`} className="pr-2 text-right text-[10px] font-semibold text-muted-foreground self-center">{d}</div>,
+            ...cells[di].map((v, hi) => (
+              <div
+                key={`c-${di}-${hi}`}
+                className="aspect-square rounded-[3px] transition hover:scale-125"
+                style={{ background: `oklch(0.69 0.15 230 / ${0.06 + v * 0.85})` }}
+                title={`${d} ${hi}h — intensidade ${(v * 100).toFixed(0)}%`}
+              />
+            )),
+          ])}
         </div>
       </div>
     </div>
