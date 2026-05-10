@@ -75,6 +75,19 @@ export function useCreateCampaign() {
   });
 }
 
+export function useUpdateCampaignStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: Campaign["status"] }) => {
+      const { error } = await supabase.from("campaigns").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+  });
+}
+
 export function useWalletTransactions() {
   return useQuery({
     queryKey: ["wallet"],
