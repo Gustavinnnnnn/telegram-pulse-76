@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Megaphone } from "lucide-react";
 import { useState } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
-import { mockCampaigns, objectiveLabels, nicheLabels } from "@/lib/mock-data";
+import { useCampaigns, objectiveLabels, nicheLabels } from "@/lib/queries";
 
 export const Route = createFileRoute("/_app/campaigns/")({
   component: CampaignsPage,
@@ -11,8 +11,9 @@ export const Route = createFileRoute("/_app/campaigns/")({
 function CampaignsPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "paused">("all");
+  const { data: campaigns = [], isLoading } = useCampaigns();
 
-  const filtered = mockCampaigns.filter((c) => {
+  const filtered = campaigns.filter((c) => {
     const matches = c.name.toLowerCase().includes(query.toLowerCase());
     const statusOk = filter === "all" || c.status === filter;
     return matches && statusOk;
@@ -59,60 +60,71 @@ function CampaignsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((c) => {
-          const ctr = ((c.clicks / c.impressions) * 100).toFixed(2);
-          const progress = Math.min(100, (c.spent / c.budget) * 100);
-          return (
-            <div key={c.id} className="card-elevated p-5">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <h3 className="truncate text-base font-bold">{c.name}</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {objectiveLabels[c.objective]} · {nicheLabels[c.niche]}
-                  </p>
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Carregando campanhas...</p>
+      ) : filtered.length === 0 ? (
+        <div className="card-elevated flex flex-col items-center gap-3 p-12 text-center">
+          <Megaphone className="h-10 w-10 text-muted-foreground" />
+          <p className="text-sm font-semibold">Nenhuma campanha encontrada</p>
+          <Link
+            to="/campaigns/new"
+            className="rounded-xl gradient-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+          >
+            Criar primeira campanha
+          </Link>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((c) => {
+            const impressions = Number(c.impressions);
+            const clicks = Number(c.clicks);
+            const ctr = impressions > 0 ? ((clicks / impressions) * 100).toFixed(2) : "0.00";
+            const budget = Number(c.budget);
+            const spent = Number(c.spent);
+            const progress = budget > 0 ? Math.min(100, (spent / budget) * 100) : 0;
+            return (
+              <div key={c.id} className="card-elevated p-5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-base font-bold">{c.name}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {objectiveLabels[c.objective]} · {nicheLabels[c.niche]}
+                    </p>
+                  </div>
+                  <StatusBadge status={c.status} />
                 </div>
-                <StatusBadge status={c.status} />
-              </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-background/40 p-3 text-center">
-                <div>
-                  <p className="text-[10px] uppercase text-muted-foreground">Impressões</p>
-                  <p className="text-sm font-bold">{c.impressions.toLocaleString("pt-BR")}</p>
+                <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-background/40 p-3 text-center">
+                  <div>
+                    <p className="text-[10px] uppercase text-muted-foreground">Impressões</p>
+                    <p className="text-sm font-bold">{impressions.toLocaleString("pt-BR")}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase text-muted-foreground">Cliques</p>
+                    <p className="text-sm font-bold">{clicks.toLocaleString("pt-BR")}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase text-muted-foreground">CTR</p>
+                    <p className="text-sm font-bold text-primary">{ctr}%</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[10px] uppercase text-muted-foreground">Cliques</p>
-                  <p className="text-sm font-bold">{c.clicks.toLocaleString("pt-BR")}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase text-muted-foreground">CTR</p>
-                  <p className="text-sm font-bold text-primary">{ctr}%</p>
-                </div>
-              </div>
 
-              <div className="mt-4">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Orçamento</span>
-                  <span className="font-semibold">
-                    R$ {c.spent.toFixed(2)} / R$ {c.budget.toFixed(2)}
-                  </span>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full gradient-primary transition-all"
-                    style={{ width: `${progress}%` }}
-                  />
+                <div className="mt-4">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Orçamento</span>
+                    <span className="font-semibold">
+                      R$ {spent.toFixed(2)} / R$ {budget.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full gradient-primary transition-all" style={{ width: `${progress}%` }} />
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-        {filtered.length === 0 && (
-          <div className="card-elevated col-span-full p-12 text-center">
-            <p className="text-sm text-muted-foreground">Nenhuma campanha encontrada.</p>
-          </div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

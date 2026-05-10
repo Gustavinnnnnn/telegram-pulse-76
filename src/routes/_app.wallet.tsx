@@ -1,13 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDownCircle, ArrowUpCircle, Plus, Wallet as WalletIcon } from "lucide-react";
-import { walletTransactions } from "@/lib/mock-data";
 import { toast } from "sonner";
+import { useProfile, useWalletTransactions, useAddCredits } from "@/lib/queries";
 
 export const Route = createFileRoute("/_app/wallet")({
   component: WalletPage,
 });
 
 function WalletPage() {
+  const { data: profile } = useProfile();
+  const { data: txs = [], isLoading } = useWalletTransactions();
+  const addCredits = useAddCredits();
+  const balance = Number(profile?.balance ?? 0);
+
+  const handleAdd = async (amount: number) => {
+    try {
+      await addCredits.mutateAsync(amount);
+      toast.success(`R$ ${amount.toFixed(2)} adicionados!`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao adicionar créditos");
+    }
+  };
+
+  const monthSpent = txs
+    .filter((t) => t.type === "spend")
+    .reduce((acc, t) => acc + Math.abs(Number(t.amount)), 0);
+
   return (
     <div className="space-y-6">
       <div>
@@ -24,15 +42,16 @@ function WalletPage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Saldo disponível</p>
-              <p className="text-3xl font-bold tracking-tight md:text-4xl">R$ 1.247,80</p>
+              <p className="text-3xl font-bold tracking-tight md:text-4xl">R$ {balance.toFixed(2)}</p>
             </div>
           </div>
           <div className="mt-6 flex flex-wrap gap-2">
             {[50, 100, 250, 500, 1000].map((v) => (
               <button
                 key={v}
-                onClick={() => toast.success(`R$ ${v} adicionados (simulação)`)}
-                className="rounded-xl border border-border bg-background/40 px-4 py-2 text-sm font-semibold transition hover:border-primary hover:bg-primary/10"
+                disabled={addCredits.isPending}
+                onClick={() => handleAdd(v)}
+                className="rounded-xl border border-border bg-background/40 px-4 py-2 text-sm font-semibold transition hover:border-primary hover:bg-primary/10 disabled:opacity-50"
               >
                 + R$ {v}
               </button>
@@ -47,38 +66,44 @@ function WalletPage() {
         </div>
 
         <div className="card-elevated p-6">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Gasto este mês</p>
-          <p className="mt-2 text-2xl font-bold">R$ 941,30</p>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
-            <div className="h-full w-[62%] gradient-primary" />
-          </div>
-          <p className="mt-2 text-[11px] text-muted-foreground">62% do orçamento mensal</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Total gasto</p>
+          <p className="mt-2 text-2xl font-bold">R$ {monthSpent.toFixed(2)}</p>
+          <p className="mt-2 text-[11px] text-muted-foreground">Acumulado em campanhas</p>
         </div>
       </div>
 
       <div className="card-elevated p-5">
         <h2 className="text-lg font-bold">Histórico de transações</h2>
-        <ul className="mt-4 divide-y divide-border">
-          {walletTransactions.map((t) => {
-            const isDeposit = t.type === "deposit";
-            return (
-              <li key={t.id} className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${isDeposit ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
-                    {isDeposit ? <ArrowDownCircle className="h-5 w-5" /> : <ArrowUpCircle className="h-5 w-5" />}
+        {isLoading ? (
+          <p className="mt-4 text-sm text-muted-foreground">Carregando...</p>
+        ) : txs.length === 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">Nenhuma transação ainda.</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-border">
+            {txs.map((t) => {
+              const isDeposit = t.type === "deposit";
+              const amount = Number(t.amount);
+              return (
+                <li key={t.id} className="flex items-center justify-between py-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${isDeposit ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
+                      {isDeposit ? <ArrowDownCircle className="h-5 w-5" /> : <ArrowUpCircle className="h-5 w-5" />}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">{t.description}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {new Date(t.created_at).toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold">{t.description}</p>
-                    <p className="text-[11px] text-muted-foreground">{t.date}</p>
-                  </div>
-                </div>
-                <p className={`text-sm font-bold ${isDeposit ? "text-success" : "text-destructive"}`}>
-                  {isDeposit ? "+" : ""}R$ {Math.abs(t.amount).toFixed(2)}
-                </p>
-              </li>
-            );
-          })}
-        </ul>
+                  <p className={`text-sm font-bold ${isDeposit ? "text-success" : "text-destructive"}`}>
+                    {isDeposit ? "+" : "-"}R$ {Math.abs(amount).toFixed(2)}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </div>
   );
