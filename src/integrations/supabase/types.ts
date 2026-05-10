@@ -14,7 +14,155 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      campaign_metrics: {
+        Row: {
+          campaign_id: string
+          clicks: number
+          created_at: string
+          day: string
+          id: string
+          impressions: number
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          clicks?: number
+          created_at?: string
+          day?: string
+          id?: string
+          impressions?: number
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          clicks?: number
+          created_at?: string
+          day?: string
+          id?: string
+          impressions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_metrics_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          budget: number
+          button_label: string
+          button_url: string
+          clicks: number
+          created_at: string
+          description: string
+          id: string
+          impressions: number
+          name: string
+          niche: Database["public"]["Enums"]["campaign_niche"]
+          objective: Database["public"]["Enums"]["campaign_objective"]
+          spent: number
+          status: Database["public"]["Enums"]["campaign_status"]
+          text: string
+          updated_at: string
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          budget?: number
+          button_label?: string
+          button_url?: string
+          clicks?: number
+          created_at?: string
+          description?: string
+          id?: string
+          impressions?: number
+          name: string
+          niche?: Database["public"]["Enums"]["campaign_niche"]
+          objective?: Database["public"]["Enums"]["campaign_objective"]
+          spent?: number
+          status?: Database["public"]["Enums"]["campaign_status"]
+          text?: string
+          updated_at?: string
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          budget?: number
+          button_label?: string
+          button_url?: string
+          clicks?: number
+          created_at?: string
+          description?: string
+          id?: string
+          impressions?: number
+          name?: string
+          niche?: Database["public"]["Enums"]["campaign_niche"]
+          objective?: Database["public"]["Enums"]["campaign_objective"]
+          spent?: number
+          status?: Database["public"]["Enums"]["campaign_status"]
+          text?: string
+          updated_at?: string
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          balance: number
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string
+          id?: string
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          type?: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +171,17 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      campaign_niche:
+        | "gaming"
+        | "income"
+        | "crypto"
+        | "adult"
+        | "news"
+        | "tech"
+        | "lifestyle"
+      campaign_objective: "traffic" | "conversion" | "engagement"
+      campaign_status: "draft" | "active" | "paused" | "completed"
+      transaction_type: "deposit" | "spend" | "refund"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +308,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      campaign_niche: [
+        "gaming",
+        "income",
+        "crypto",
+        "adult",
+        "news",
+        "tech",
+        "lifestyle",
+      ],
+      campaign_objective: ["traffic", "conversion", "engagement"],
+      campaign_status: ["draft", "active", "paused", "completed"],
+      transaction_type: ["deposit", "spend", "refund"],
+    },
   },
 } as const
