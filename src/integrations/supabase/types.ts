@@ -54,18 +54,19 @@ export type Database = {
       }
       campaigns: {
         Row: {
-          budget: number
           button_label: string
           button_url: string
           clicks: number
           created_at: string
           description: string
+          dm_sent: number
+          dm_total: number
           id: string
           impressions: number
+          media_url: string | null
           name: string
           niche: Database["public"]["Enums"]["campaign_niche"]
           objective: Database["public"]["Enums"]["campaign_objective"]
-          spent: number
           status: Database["public"]["Enums"]["campaign_status"]
           text: string
           updated_at: string
@@ -73,18 +74,19 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
-          budget?: number
           button_label?: string
           button_url?: string
           clicks?: number
           created_at?: string
           description?: string
+          dm_sent?: number
+          dm_total?: number
           id?: string
           impressions?: number
+          media_url?: string | null
           name: string
           niche?: Database["public"]["Enums"]["campaign_niche"]
           objective?: Database["public"]["Enums"]["campaign_objective"]
-          spent?: number
           status?: Database["public"]["Enums"]["campaign_status"]
           text?: string
           updated_at?: string
@@ -92,18 +94,19 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
-          budget?: number
           button_label?: string
           button_url?: string
           clicks?: number
           created_at?: string
           description?: string
+          dm_sent?: number
+          dm_total?: number
           id?: string
           impressions?: number
+          media_url?: string | null
           name?: string
           niche?: Database["public"]["Enums"]["campaign_niche"]
           objective?: Database["public"]["Enums"]["campaign_objective"]
-          spent?: number
           status?: Database["public"]["Enums"]["campaign_status"]
           text?: string
           updated_at?: string
@@ -112,54 +115,98 @@ export type Database = {
         }
         Relationships: []
       }
+      dm_packages: {
+        Row: {
+          created_at: string
+          featured: boolean
+          id: string
+          name: string
+          price_brl: number
+          quantity: number
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          featured?: boolean
+          id?: string
+          name: string
+          price_brl: number
+          quantity: number
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          featured?: boolean
+          id?: string
+          name?: string
+          price_brl?: number
+          quantity?: number
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      dm_purchases: {
+        Row: {
+          created_at: string
+          id: string
+          package_id: string | null
+          package_name: string
+          price_brl: number
+          quantity: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          package_id?: string | null
+          package_name: string
+          price_brl: number
+          quantity: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          package_id?: string | null
+          package_name?: string
+          price_brl?: number
+          quantity?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_purchases_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "dm_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
-          balance: number
           created_at: string
           display_name: string | null
+          dm_balance: number
           id: string
           updated_at: string
         }
         Insert: {
-          balance?: number
           created_at?: string
           display_name?: string | null
+          dm_balance?: number
           id: string
           updated_at?: string
         }
         Update: {
-          balance?: number
           created_at?: string
           display_name?: string | null
+          dm_balance?: number
           id?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      wallet_transactions: {
-        Row: {
-          amount: number
-          created_at: string
-          description: string
-          id: string
-          type: Database["public"]["Enums"]["transaction_type"]
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          description?: string
-          id?: string
-          type: Database["public"]["Enums"]["transaction_type"]
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          description?: string
-          id?: string
-          type?: Database["public"]["Enums"]["transaction_type"]
-          user_id?: string
         }
         Relationships: []
       }
@@ -168,7 +215,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      consume_dms: {
+        Args: { _campaign_id: string; _qty: number }
+        Returns: Json
+      }
+      purchase_dm_package: { Args: { _package_id: string }; Returns: Json }
     }
     Enums: {
       campaign_niche:
