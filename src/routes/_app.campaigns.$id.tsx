@@ -251,6 +251,8 @@ function CampaignDetailPage() {
                 text={campaign.text}
                 description={campaign.description ?? undefined}
                 buttonLabel={campaign.button_label}
+                mediaUrl={campaign.media_url ?? undefined}
+                simulateDelivery
               />
             </div>
           </div>
