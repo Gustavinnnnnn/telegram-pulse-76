@@ -15,15 +15,12 @@ export const Route = createFileRoute("/_app/settings")({
   component: SettingsPage,
 });
 
-type Tab = "profile" | "notifications" | "security" | "billing" | "telegram" | "api" | "appearance";
+type Tab = "profile" | "notifications" | "security" | "appearance";
 
 const TABS: { id: Tab; label: string; icon: typeof User; desc: string }[] = [
   { id: "profile", label: "Perfil", icon: User, desc: "Suas informações pessoais" },
   { id: "notifications", label: "Notificações", icon: Bell, desc: "Como você é avisado" },
   { id: "security", label: "Segurança", icon: Shield, desc: "Senha e autenticação" },
-  { id: "billing", label: "Cobrança", icon: CreditCard, desc: "Métodos de pagamento" },
-  { id: "telegram", label: "Telegram Bot", icon: Bot, desc: "Conectar bot oficial" },
-  { id: "api", label: "API & Webhooks", icon: Code2, desc: "Integrações externas" },
   { id: "appearance", label: "Aparência", icon: Palette, desc: "Tema e idioma" },
 ];
 
@@ -73,9 +70,6 @@ function SettingsPage() {
           {tab === "profile" && <ProfileSection profile={profile} email={user?.email ?? ""} userId={user?.id ?? ""} />}
           {tab === "notifications" && <NotificationsSection />}
           {tab === "security" && <SecuritySection email={user?.email ?? ""} signOut={signOut} />}
-          {tab === "billing" && <BillingSection />}
-          {tab === "telegram" && <TelegramSection />}
-          {tab === "api" && <ApiSection userId={user?.id ?? ""} />}
           {tab === "appearance" && <AppearanceSection />}
         </div>
       </div>
@@ -100,12 +94,12 @@ function ProfileSection({ profile, email, userId }: { profile: any; email: strin
 
   return (
     <>
-      <Card title="Foto e identidade" desc="Como você aparece para outros usuários">
+      <Card title="Foto e identidade" desc="Como você aparece no painel">
         <div className="flex items-center gap-4">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-glow text-3xl font-bold text-white">{initial}</div>
-          <div className="flex-1">
-            <button className="rounded-lg border border-border/60 bg-surface-1/60 px-3 py-1.5 text-[12px] font-semibold transition hover:border-primary/40">Trocar foto</button>
-            <p className="mt-1.5 text-[10.5px] text-muted-foreground">JPG ou PNG, máx. 2MB</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-[12.5px] font-semibold">Avatar gerado pelas suas iniciais</p>
+            <p className="mt-1 text-[10.5px] text-muted-foreground">É atualizado automaticamente quando você muda o nome de exibição.</p>
           </div>
         </div>
       </Card>
@@ -114,8 +108,6 @@ function ProfileSection({ profile, email, userId }: { profile: any; email: strin
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Nome de exibição"><input value={name} onChange={e => setName(e.target.value)} className={inputCls} /></Field>
           <Field label="E-mail"><input value={email} disabled className={cn(inputCls, "opacity-60")} /></Field>
-          <Field label="Telefone (WhatsApp)"><input placeholder="+55 11 99999-9999" className={inputCls} /></Field>
-          <Field label="Empresa / Marca"><input placeholder="Sua marca" className={inputCls} /></Field>
         </div>
         <div className="mt-4 flex items-center justify-between">
           <p className="text-[10.5px] font-mono text-muted-foreground">ID: {shortId(userId)}</p>
@@ -129,37 +121,45 @@ function ProfileSection({ profile, email, userId }: { profile: any; email: strin
 }
 
 /* ---------- Notifications ---------- */
+const PREFS_KEY = "tla_notif_prefs_v1";
+const CHANNELS_KEY = "tla_notif_channels_v1";
 function NotificationsSection() {
-  const [prefs, setPrefs] = useState({
-    campaign_complete: true,
-    campaign_low_balance: true,
-    daily_report: false,
-    weekly_report: true,
-    new_features: true,
-    promos: false,
+  const [prefs, setPrefs] = useState(() => {
+    if (typeof window === "undefined") return { campaign_complete: true, campaign_low_balance: true, daily_report: false, weekly_report: true, new_features: true, promos: false };
+    try { return JSON.parse(localStorage.getItem(PREFS_KEY) || "") || { campaign_complete: true, campaign_low_balance: true, daily_report: false, weekly_report: true, new_features: true, promos: false }; }
+    catch { return { campaign_complete: true, campaign_low_balance: true, daily_report: false, weekly_report: true, new_features: true, promos: false }; }
   });
-  const [channels, setChannels] = useState({ email: true, push: true, telegram: false });
+  const [channels, setChannels] = useState(() => {
+    if (typeof window === "undefined") return { email: true, push: false };
+    try { return JSON.parse(localStorage.getItem(CHANNELS_KEY) || "") || { email: true, push: false }; }
+    catch { return { email: true, push: false }; }
+  });
+
+  const save = () => {
+    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    localStorage.setItem(CHANNELS_KEY, JSON.stringify(channels));
+    toast.success("Preferências salvas");
+  };
 
   return (
     <>
       <Card title="Canais de notificação" desc="Onde você quer receber avisos">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <ChannelTile icon={Mail} label="E-mail" active={channels.email} onClick={() => setChannels(c => ({ ...c, email: !c.email }))} />
-          <ChannelTile icon={Smartphone} label="Push no navegador" active={channels.push} onClick={() => setChannels(c => ({ ...c, push: !c.push }))} />
-          <ChannelTile icon={Bot} label="Telegram bot" active={channels.telegram} onClick={() => setChannels(c => ({ ...c, telegram: !c.telegram }))} />
+        <div className="grid gap-3 grid-cols-2">
+          <ChannelTile icon={Mail} label="E-mail" active={channels.email} onClick={() => setChannels((c: any) => ({ ...c, email: !c.email }))} />
+          <ChannelTile icon={Smartphone} label="Push no navegador" active={channels.push} onClick={() => setChannels((c: any) => ({ ...c, push: !c.push }))} />
         </div>
       </Card>
 
       <Card title="O que você quer receber" desc="Marque os eventos que importam">
         <ul className="space-y-1">
-          <Toggle label="Campanha concluída" desc="Quando todas as DMs forem enviadas" value={prefs.campaign_complete} onChange={v => setPrefs(p => ({ ...p, campaign_complete: v }))} />
-          <Toggle label="Saldo baixo" desc="Quando seu saldo cair abaixo de 100 DMs" value={prefs.campaign_low_balance} onChange={v => setPrefs(p => ({ ...p, campaign_low_balance: v }))} />
-          <Toggle label="Relatório diário" desc="Resumo das suas campanhas todo dia às 09h" value={prefs.daily_report} onChange={v => setPrefs(p => ({ ...p, daily_report: v }))} />
-          <Toggle label="Relatório semanal" desc="Resumo de performance toda segunda" value={prefs.weekly_report} onChange={v => setPrefs(p => ({ ...p, weekly_report: v }))} />
-          <Toggle label="Novidades do produto" desc="Novas funcionalidades e melhorias" value={prefs.new_features} onChange={v => setPrefs(p => ({ ...p, new_features: v }))} />
-          <Toggle label="Promoções e descontos" desc="Cupons em pacotes de DMs" value={prefs.promos} onChange={v => setPrefs(p => ({ ...p, promos: v }))} />
+          <Toggle label="Campanha concluída" desc="Quando todas as DMs forem enviadas" value={prefs.campaign_complete} onChange={v => setPrefs((p: any) => ({ ...p, campaign_complete: v }))} />
+          <Toggle label="Saldo baixo" desc="Quando seu saldo cair abaixo de 100 DMs" value={prefs.campaign_low_balance} onChange={v => setPrefs((p: any) => ({ ...p, campaign_low_balance: v }))} />
+          <Toggle label="Relatório diário" desc="Resumo das suas campanhas todo dia às 09h" value={prefs.daily_report} onChange={v => setPrefs((p: any) => ({ ...p, daily_report: v }))} />
+          <Toggle label="Relatório semanal" desc="Resumo de performance toda segunda" value={prefs.weekly_report} onChange={v => setPrefs((p: any) => ({ ...p, weekly_report: v }))} />
+          <Toggle label="Novidades do produto" desc="Novas funcionalidades e melhorias" value={prefs.new_features} onChange={v => setPrefs((p: any) => ({ ...p, new_features: v }))} />
+          <Toggle label="Promoções e descontos" desc="Cupons em pacotes de DMs" value={prefs.promos} onChange={v => setPrefs((p: any) => ({ ...p, promos: v }))} />
         </ul>
-        <button onClick={() => toast.success("Preferências salvas")} className="mt-4 rounded-lg gradient-primary px-4 py-2 text-[12px] font-semibold text-white transition hover:brightness-110">Salvar preferências</button>
+        <button onClick={save} className="mt-4 rounded-lg gradient-primary px-4 py-2 text-[12px] font-semibold text-white transition hover:brightness-110">Salvar preferências</button>
       </Card>
     </>
   );

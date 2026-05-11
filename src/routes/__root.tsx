@@ -54,7 +54,7 @@ export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
       { title: "TeleAds — Plataforma de Anúncios para Telegram" },
       { name: "description", content: "Crie, gerencie e otimize campanhas de anúncios no Telegram com métricas em tempo real." },
       { property: "og:title", content: "TeleAds — Plataforma de Anúncios para Telegram" },

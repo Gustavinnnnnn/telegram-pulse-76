@@ -1,8 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Package, Zap, ShieldCheck, Sparkles, Receipt, Check, Clock, Info } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Package, Zap, ShieldCheck, Sparkles, Receipt, Check, Clock, Info, X, Loader2, User, Mail, IdCard, Phone } from "lucide-react";
 import { toast } from "sonner";
-import { useProfile, usePackages, usePurchases, usePurchasePackage, type DMPackage } from "@/lib/queries";
+import { useProfile, usePackages, usePurchases, type DMPackage } from "@/lib/queries";
+import { createCheckout } from "@/lib/paradise.functions";
 import { compactNumber, currency, dms } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -17,88 +19,101 @@ const TIER_THEMES = [
   { gradient: "from-warning/35 via-warning/10 to-transparent", glow: "shadow-[0_20px_60px_-30px_oklch(0.78_0.17_60_/_0.6)]", accent: "text-warning", border: "border-warning/40", chip: "bg-warning/15 text-warning" },
 ];
 
+function maskCpf(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0,3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
+  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+}
+function maskPhone(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 2) return d;
+  if (d.length <= 7) return `(${d.slice(0,2)}) ${d.slice(2)}`;
+  return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+}
+
 function StorePage() {
   const { data: profile } = useProfile();
   const { data: packages = [], isLoading } = usePackages();
   const { data: purchases = [] } = usePurchases();
-  const purchase = usePurchasePackage();
-  const [pendingId, setPendingId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const checkoutFn = useServerFn(createCheckout);
+  const [selected, setSelected] = useState<DMPackage | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", document: "", phone: "" });
 
   const balance = profile?.dm_balance ?? 0;
-
-  const handleBuy = async (pkg: DMPackage) => {
-    setPendingId(pkg.id);
-    try {
-      const res = await purchase.mutateAsync(pkg.id);
-      toast.success(`+${compactNumber(res.quantity)} DMs adicionadas`, {
-        description: `Pacote ${pkg.name} liberado · R$ ${Number(pkg.price_brl).toFixed(2).replace(".", ",")}`,
-      });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao processar compra");
-    } finally {
-      setPendingId(null);
-    }
-  };
-
   const totalBought = useMemo(() => purchases.reduce((a, p) => a + p.quantity, 0), [purchases]);
   const totalSpent = useMemo(() => purchases.reduce((a, p) => a + Number(p.price_brl), 0), [purchases]);
 
+  const submit = async () => {
+    if (!selected) return;
+    if (!form.name.trim() || form.name.trim().length < 2) return toast.error("Informe seu nome completo");
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) return toast.error("E-mail inválido");
+    if (form.document.replace(/\D/g, "").length < 11) return toast.error("CPF inválido");
+    if (form.phone.replace(/\D/g, "").length < 10) return toast.error("Telefone inválido");
+    setBusy(true);
+    try {
+      const res = await checkoutFn({ data: { package_id: selected.id, ...form } });
+      navigate({ to: "/checkout/$intentId", params: { intentId: res.intent_id } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao gerar PIX");
+    } finally { setBusy(false); }
+  };
+
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div>
         <div className="flex items-center gap-2">
           <Package className="h-4 w-4 text-primary" />
           <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Loja de DMs</span>
         </div>
-        <h1 className="mt-1 font-display text-[26px] font-bold tracking-tight md:text-[32px]">Compre pacotes de disparos</h1>
-        <p className="text-[13px] text-muted-foreground">Cada DM enviada do seu painel consome 1 crédito. Sem mensalidade. Sem assinatura.</p>
+        <h1 className="mt-1 font-display text-[22px] font-bold tracking-tight sm:text-[28px] md:text-[32px]">Compre pacotes de disparos</h1>
+        <p className="text-[12.5px] text-muted-foreground">Pagamento via PIX. Saldo creditado automaticamente após confirmação.</p>
       </div>
 
-      {/* Balance summary */}
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="tile relative overflow-hidden p-5 sm:col-span-1">
+        <div className="tile relative overflow-hidden p-4 sm:p-5">
           <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br from-primary/30 to-cyan/20 blur-3xl" />
           <div className="relative">
             <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Saldo de DMs</p>
-            <p className="mt-1 font-display text-4xl font-bold tabular text-gradient-primary">{compactNumber(balance)}</p>
+            <p className="mt-1 font-display text-3xl sm:text-4xl font-bold tabular text-gradient-primary">{compactNumber(balance)}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">{balance.toLocaleString("pt-BR")} disparos disponíveis</p>
           </div>
         </div>
-        <div className="tile p-5">
+        <div className="tile p-4 sm:p-5">
           <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">DMs adquiridas</p>
-          <p className="mt-1 font-display text-3xl font-bold tabular">{compactNumber(totalBought)}</p>
+          <p className="mt-1 font-display text-2xl sm:text-3xl font-bold tabular">{compactNumber(totalBought)}</p>
           <p className="mt-1 text-[11px] text-muted-foreground">{purchases.length} compras realizadas</p>
         </div>
-        <div className="tile p-5">
+        <div className="tile p-4 sm:p-5">
           <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Investimento total</p>
-          <p className="mt-1 font-display text-3xl font-bold tabular text-gradient-mint">{currency(totalSpent)}</p>
+          <p className="mt-1 font-display text-2xl sm:text-3xl font-bold tabular text-gradient-mint">{currency(totalSpent)}</p>
           <p className="mt-1 text-[11px] text-muted-foreground">acumulado em todas as compras</p>
         </div>
       </div>
 
-      {/* Packages grid */}
       <div>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-display text-base font-bold">Pacotes disponíveis</h2>
-          <span className="inline-flex items-center gap-1 text-[10.5px] text-muted-foreground">
-            <ShieldCheck className="h-3 w-3" /> liberação imediata após confirmação
+          <span className="hidden sm:inline-flex items-center gap-1 text-[10.5px] text-muted-foreground">
+            <ShieldCheck className="h-3 w-3" /> liberação imediata após pagamento
           </span>
         </div>
 
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Carregando pacotes…</p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
             {packages.map((pkg, i) => {
               const theme = TIER_THEMES[i % TIER_THEMES.length];
               const pricePerDm = Number(pkg.price_brl) / pkg.quantity;
-              const isLoading = purchase.isPending && pendingId === pkg.id;
               return (
                 <div
                   key={pkg.id}
                   className={cn(
-                    "tile group relative overflow-hidden p-5 transition hover:scale-[1.015]",
+                    "tile group relative overflow-hidden p-4 sm:p-5 transition hover:scale-[1.015]",
                     pkg.featured && "ring-1 ring-primary/40",
                     pkg.featured && theme.glow,
                   )}
@@ -114,17 +129,13 @@ function StorePage() {
                       <Package className="h-5 w-5" />
                     </div>
                     <p className="mt-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{pkg.name}</p>
-                    <p className={cn("font-display text-4xl font-bold tabular leading-none", theme.accent)}>{compactNumber(pkg.quantity)}</p>
+                    <p className={cn("font-display text-3xl sm:text-4xl font-bold tabular leading-none", theme.accent)}>{compactNumber(pkg.quantity)}</p>
                     <p className="text-[11px] text-muted-foreground">DMs garantidas</p>
 
                     <div className="my-4 h-px bg-border/50" />
 
-                    <p className="font-display text-2xl font-bold tabular">
-                      R$ {Number(pkg.price_brl).toFixed(2).replace(".", ",")}
-                    </p>
-                    <p className="text-[10.5px] tabular text-muted-foreground">
-                      ≈ R$ {pricePerDm.toFixed(3).replace(".", ",")} por DM
-                    </p>
+                    <p className="font-display text-2xl font-bold tabular">{currency(Number(pkg.price_brl))}</p>
+                    <p className="text-[10.5px] tabular text-muted-foreground">≈ {currency(pricePerDm)} por DM</p>
 
                     <ul className="mt-3 space-y-1 text-[11px]">
                       <Feat>Distribuição inteligente</Feat>
@@ -133,16 +144,15 @@ function StorePage() {
                     </ul>
 
                     <button
-                      onClick={() => handleBuy(pkg)}
-                      disabled={isLoading || purchase.isPending}
+                      onClick={() => { setSelected(pkg); setForm({ name: profile?.display_name || "", email: "", document: "", phone: "" }); }}
                       className={cn(
-                        "mt-4 w-full rounded-xl px-4 py-2.5 text-[12.5px] font-semibold transition-all disabled:opacity-50",
+                        "mt-4 w-full rounded-xl px-4 py-2.5 text-[12.5px] font-semibold transition-all",
                         pkg.featured
                           ? "gradient-primary text-white glow-primary hover:brightness-110"
                           : cn("border bg-surface-1/60 hover:bg-surface-2", theme.border, theme.accent),
                       )}
                     >
-                      {isLoading ? "Processando…" : <span className="inline-flex items-center justify-center gap-1.5"><Zap className="h-3.5 w-3.5" /> Comprar agora</span>}
+                      <span className="inline-flex items-center justify-center gap-1.5"><Zap className="h-3.5 w-3.5" /> Comprar agora</span>
                     </button>
                   </div>
                 </div>
@@ -152,7 +162,6 @@ function StorePage() {
         )}
       </div>
 
-      {/* Info row */}
       <div className="tile flex items-start gap-3 p-4">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
           <Info className="h-4 w-4" />
@@ -160,43 +169,41 @@ function StorePage() {
         <div className="text-[12px] leading-relaxed">
           <p className="font-semibold">Como funciona?</p>
           <p className="text-muted-foreground">
-            Após a compra, o saldo de DMs cai imediatamente na sua conta. Você cria campanhas no painel definindo
-            quanto desse saldo quer usar em cada uma. Cada disparo bem-sucedido consome 1 DM. Sem dinheiro envolvido — só DMs.
+            Selecione um pacote, preencha seu nome e e-mail e pague via PIX. O QR code aparece direto no checkout. Assim que o pagamento for confirmado, suas DMs entram automaticamente no saldo.
           </p>
         </div>
       </div>
 
-      {/* Purchase history */}
       <div className="tile overflow-hidden">
         <div className="flex items-center justify-between border-b border-border/40 p-4">
-          <div className="flex items-center gap-2">
-            <Receipt className="h-4 w-4 text-muted-foreground" />
-            <h2 className="font-display text-base font-bold">Histórico de compras</h2>
+          <div className="flex items-center gap-2 min-w-0">
+            <Receipt className="h-4 w-4 text-muted-foreground shrink-0" />
+            <h2 className="font-display text-base font-bold truncate">Histórico de compras</h2>
           </div>
-          <span className="text-[10.5px] text-muted-foreground">{purchases.length} {purchases.length === 1 ? "registro" : "registros"}</span>
+          <span className="text-[10.5px] text-muted-foreground shrink-0">{purchases.length} {purchases.length === 1 ? "registro" : "registros"}</span>
         </div>
 
         {purchases.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 p-12 text-center">
-            <Clock className="h-8 w-8 text-muted-foreground" />
+          <div className="flex flex-col items-center gap-2 p-10 text-center">
+            <Clock className="h-7 w-7 text-muted-foreground" />
             <p className="text-sm font-semibold">Nenhuma compra ainda</p>
             <p className="text-[11px] text-muted-foreground">Suas aquisições de pacotes aparecerão aqui.</p>
           </div>
         ) : (
           <ul className="divide-y divide-border/30">
             {purchases.map((p) => (
-              <li key={p.id} className="flex items-center gap-3 p-3.5 transition hover:bg-surface-1/40">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success/15 text-success">
-                  <Package className="h-4.5 w-4.5" />
+              <li key={p.id} className="flex items-center gap-3 p-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/15 text-success">
+                  <Package className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-semibold">Pacote {p.package_name}</p>
-                  <p className="text-[10.5px] text-muted-foreground">
-                    {new Date(p.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })} · #{p.id.slice(0, 6)}
+                  <p className="text-[12.5px] font-semibold truncate">Pacote {p.package_name}</p>
+                  <p className="text-[10.5px] text-muted-foreground truncate">
+                    {new Date(p.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })} · #{p.id.slice(0, 6)}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="font-display text-base font-bold tabular text-success">+ {dms(p.quantity)}</p>
+                <div className="text-right shrink-0">
+                  <p className="font-display text-sm sm:text-base font-bold tabular text-success">+ {dms(p.quantity)}</p>
                   <p className="text-[10.5px] tabular text-muted-foreground">{currency(Number(p.price_brl))}</p>
                 </div>
               </li>
@@ -204,6 +211,51 @@ function StorePage() {
           </ul>
         )}
       </div>
+
+      {/* Customer info modal */}
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4 animate-[fade-in_0.2s_ease-out]">
+          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border/60 bg-surface-1 p-5 sm:p-6 shadow-2xl animate-[slide-up_0.25s_ease-out]">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Checkout · Etapa 1 de 2</p>
+                <h3 className="mt-0.5 font-display text-lg font-bold">Seus dados</h3>
+                <p className="text-[12px] text-muted-foreground">Em seguida você recebe o QR Code PIX.</p>
+              </div>
+              <button onClick={() => setSelected(null)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-2 hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-3 rounded-xl border border-border/40 bg-surface-2/40 p-3 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg gradient-primary text-white"><Package className="h-5 w-5" /></div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12.5px] font-semibold truncate">{selected.name} · {compactNumber(selected.quantity)} DMs</p>
+                <p className="text-[10.5px] text-muted-foreground">PIX à vista</p>
+              </div>
+              <p className="font-display text-lg font-bold tabular shrink-0">{currency(Number(selected.price_brl))}</p>
+            </div>
+
+            <div className="mt-4 space-y-2.5">
+              <Input icon={User} placeholder="Nome completo" value={form.name} onChange={(v) => setForm(f => ({ ...f, name: v }))} />
+              <Input icon={Mail} placeholder="E-mail" type="email" value={form.email} onChange={(v) => setForm(f => ({ ...f, email: v }))} />
+              <Input icon={IdCard} placeholder="CPF" value={form.document} onChange={(v) => setForm(f => ({ ...f, document: maskCpf(v) }))} inputMode="numeric" />
+              <Input icon={Phone} placeholder="Telefone com DDD" value={form.phone} onChange={(v) => setForm(f => ({ ...f, phone: maskPhone(v) }))} inputMode="tel" />
+            </div>
+
+            <button
+              onClick={submit}
+              disabled={busy}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl gradient-primary px-4 py-3 text-[13px] font-semibold text-white transition hover:brightness-110 glow-primary disabled:opacity-50"
+            >
+              {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Gerando PIX…</> : <>Gerar QR Code PIX <Zap className="h-4 w-4" /></>}
+            </button>
+            <p className="mt-2 text-center text-[10.5px] text-muted-foreground">
+              <ShieldCheck className="inline h-3 w-3 mr-1" /> Pagamento processado por Paradise Pay
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -213,5 +265,23 @@ function Feat({ children }: { children: React.ReactNode }) {
     <li className="flex items-center gap-1.5 text-muted-foreground">
       <Check className="h-3 w-3 shrink-0 text-success" /> {children}
     </li>
+  );
+}
+
+function Input({ icon: Icon, placeholder, value, onChange, type = "text", inputMode }: {
+  icon: typeof User; placeholder: string; value: string; onChange: (v: string) => void; type?: string; inputMode?: "numeric" | "tel" | "email" | "text";
+}) {
+  return (
+    <div className="relative">
+      <Icon className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+      <input
+        type={type}
+        inputMode={inputMode}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-xl border border-border/60 bg-surface-2/60 py-2.5 pl-9 pr-3 text-[13px] outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+      />
+    </div>
   );
 }
