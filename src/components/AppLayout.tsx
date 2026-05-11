@@ -12,7 +12,7 @@ const mainNav = [
   { to: "/campaigns/new", label: "Criar campanha", icon: PlusCircle, accent: true },
 ] as const;
 const accountNav = [
-  { to: "/wallet", label: "Faturamento", icon: Wallet },
+  { to: "/store", label: "Loja de DMs", icon: Package },
   { to: "/settings", label: "Ajustes", icon: Settings },
 ] as const;
 
