@@ -23,6 +23,12 @@ export function percent(n: number, digits = 2): string {
   return `${n.toFixed(digits).replace(".", ",")}%`;
 }
 
+// Format DM count for display ("1.234 DMs", "1,2k DMs")
+export function dms(n: number, opts: { compact?: boolean; suffix?: boolean } = {}): string {
+  const num = opts.compact ? compactNumber(n) : intFmt.format(Math.round(n));
+  return opts.suffix === false ? num : `${num} DMs`;
+}
+
 export function shortId(id: string): string {
   return id.slice(0, 8).toUpperCase();
 }
