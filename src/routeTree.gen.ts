@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppStoreRouteImport } from './routes/_app.store'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppCampaignsIndexRouteImport } from './routes/_app.campaigns.index'
 import { Route as AppCampaignsNewRouteImport } from './routes/_app.campaigns.new'
@@ -29,6 +30,11 @@ const AppRoute = AppRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStoreRoute = AppStoreRouteImport.update({
+  id: '/store',
+  path: '/store',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
@@ -56,6 +62,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/auth': typeof AuthRoute
   '/settings': typeof AppSettingsRoute
+  '/store': typeof AppStoreRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/campaigns/new': typeof AppCampaignsNewRoute
   '/campaigns/': typeof AppCampaignsIndexRoute
@@ -63,6 +70,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/settings': typeof AppSettingsRoute
+  '/store': typeof AppStoreRoute
   '/': typeof AppIndexRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/campaigns/new': typeof AppCampaignsNewRoute
@@ -73,6 +81,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/store': typeof AppStoreRoute
   '/_app/': typeof AppIndexRoute
   '/_app/campaigns/$id': typeof AppCampaignsIdRoute
   '/_app/campaigns/new': typeof AppCampaignsNewRoute
@@ -84,6 +93,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/settings'
+    | '/store'
     | '/campaigns/$id'
     | '/campaigns/new'
     | '/campaigns/'
@@ -91,6 +101,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/settings'
+    | '/store'
     | '/'
     | '/campaigns/$id'
     | '/campaigns/new'
@@ -100,6 +111,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/auth'
     | '/_app/settings'
+    | '/_app/store'
     | '/_app/'
     | '/_app/campaigns/$id'
     | '/_app/campaigns/new'
@@ -132,6 +144,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/store': {
+      id: '/_app/store'
+      path: '/store'
+      fullPath: '/store'
+      preLoaderRoute: typeof AppStoreRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings': {
@@ -167,6 +186,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
+  AppStoreRoute: typeof AppStoreRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCampaignsIdRoute: typeof AppCampaignsIdRoute
   AppCampaignsNewRoute: typeof AppCampaignsNewRoute
@@ -175,6 +195,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
+  AppStoreRoute: AppStoreRoute,
   AppIndexRoute: AppIndexRoute,
   AppCampaignsIdRoute: AppCampaignsIdRoute,
   AppCampaignsNewRoute: AppCampaignsNewRoute,
@@ -190,3 +211,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
