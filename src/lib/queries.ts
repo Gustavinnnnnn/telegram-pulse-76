@@ -5,7 +5,8 @@ import type { Database } from "@/integrations/supabase/types";
 export type Campaign = Database["public"]["Tables"]["campaigns"]["Row"];
 export type CampaignInsert = Database["public"]["Tables"]["campaigns"]["Insert"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
-export type WalletTx = Database["public"]["Tables"]["wallet_transactions"]["Row"];
+export type DMPackage = Database["public"]["Tables"]["dm_packages"]["Row"];
+export type DMPurchase = Database["public"]["Tables"]["dm_purchases"]["Row"];
 
 export const objectiveLabels: Record<Campaign["objective"], string> = {
   traffic: "Tráfego",
@@ -88,12 +89,26 @@ export function useUpdateCampaignStatus() {
   });
 }
 
-export function useWalletTransactions() {
+export function usePackages() {
   return useQuery({
-    queryKey: ["wallet"],
-    queryFn: async (): Promise<WalletTx[]> => {
+    queryKey: ["packages"],
+    queryFn: async (): Promise<DMPackage[]> => {
       const { data, error } = await supabase
-        .from("wallet_transactions")
+        .from("dm_packages")
+        .select("*")
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function usePurchases() {
+  return useQuery({
+    queryKey: ["purchases"],
+    queryFn: async (): Promise<DMPurchase[]> => {
+      const { data, error } = await supabase
+        .from("dm_purchases")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(50);
@@ -103,29 +118,17 @@ export function useWalletTransactions() {
   });
 }
 
-export function useAddCredits() {
+export function usePurchasePackage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (amount: number) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Não autenticado");
-      // Insert transaction
-      const { error: txError } = await supabase.from("wallet_transactions").insert({
-        user_id: user.id,
-        type: "deposit",
-        amount,
-        description: `Depósito de R$ ${amount.toFixed(2)}`,
-      });
-      if (txError) throw txError;
-      // Update balance (read-modify-write)
-      const { data: profile } = await supabase.from("profiles").select("balance").eq("id", user.id).single();
-      const newBalance = Number(profile?.balance ?? 0) + amount;
-      const { error: pErr } = await supabase.from("profiles").update({ balance: newBalance }).eq("id", user.id);
-      if (pErr) throw pErr;
+    mutationFn: async (packageId: string) => {
+      const { data, error } = await supabase.rpc("purchase_dm_package", { _package_id: packageId });
+      if (error) throw error;
+      return data as { purchase_id: string; quantity: number };
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["profile"] });
+      qc.invalidateQueries({ queryKey: ["purchases"] });
     },
   });
 }
