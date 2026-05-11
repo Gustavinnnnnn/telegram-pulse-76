@@ -77,7 +77,7 @@ function LandingPage() {
         <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
           <div className="lg:col-span-7">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10.5px] font-bold uppercase tracking-wider text-primary">
-              <Sparkles className="h-3 w-3" /> Beta limitado · Novos cadastros recebem 100 DMs grátis
+              <Sparkles className="h-3 w-3" /> Beta limitado · acesso liberado
             </span>
             <h1 className="mt-5 font-display text-[36px] sm:text-[48px] md:text-[64px] font-bold leading-[1.05] tracking-tight">
               Venda direto na <span className="text-gradient-primary">caixa de entrada</span> do Telegram.
@@ -87,10 +87,10 @@ function LandingPage() {
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link to="/auth" className="inline-flex items-center gap-1.5 rounded-xl gradient-primary px-5 py-3 text-[14px] font-semibold text-white transition hover:brightness-110 glow-primary">
-                Começar grátis <ArrowRight className="h-4 w-4" />
+                Criar conta <ArrowRight className="h-4 w-4" />
               </Link>
-              <a href="#how" className="inline-flex items-center gap-1.5 rounded-xl border border-border/60 bg-surface-1/60 px-5 py-3 text-[13px] font-semibold transition hover:border-primary/40">
-                <Play className="h-3.5 w-3.5 text-primary" /> Ver como funciona
+              <a href="#pricing" className="inline-flex items-center gap-1.5 rounded-xl border border-border/60 bg-surface-1/60 px-5 py-3 text-[13px] font-semibold transition hover:border-primary/40">
+                <Play className="h-3.5 w-3.5 text-primary" /> Ver pacotes
               </a>
             </div>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-[12px] text-muted-foreground">
@@ -220,9 +220,9 @@ function LandingPage() {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/15 via-cyan/10 to-transparent" />
           <div className="relative">
             <h2 className="font-display text-[28px] md:text-[40px] font-bold">Pronto para vender direto no Telegram?</h2>
-            <p className="mx-auto mt-3 max-w-lg text-[14px] text-muted-foreground">Crie sua conta agora e ganhe <strong className="text-primary">100 DMs grátis</strong> para testar a plataforma. Sem cartão.</p>
+            <p className="mx-auto mt-3 max-w-lg text-[14px] text-muted-foreground">Crie sua conta em segundos e escolha o pacote ideal. Pagamento via PIX com liberação imediata.</p>
             <Link to="/auth" className="mt-6 inline-flex items-center gap-1.5 rounded-xl gradient-primary px-6 py-3 text-[14px] font-semibold text-white transition hover:brightness-110 glow-primary">
-              Criar conta grátis <ArrowRight className="h-4 w-4" />
+              Criar conta <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
