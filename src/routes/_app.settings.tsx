@@ -121,37 +121,45 @@ function ProfileSection({ profile, email, userId }: { profile: any; email: strin
 }
 
 /* ---------- Notifications ---------- */
+const PREFS_KEY = "tla_notif_prefs_v1";
+const CHANNELS_KEY = "tla_notif_channels_v1";
 function NotificationsSection() {
-  const [prefs, setPrefs] = useState({
-    campaign_complete: true,
-    campaign_low_balance: true,
-    daily_report: false,
-    weekly_report: true,
-    new_features: true,
-    promos: false,
+  const [prefs, setPrefs] = useState(() => {
+    if (typeof window === "undefined") return { campaign_complete: true, campaign_low_balance: true, daily_report: false, weekly_report: true, new_features: true, promos: false };
+    try { return JSON.parse(localStorage.getItem(PREFS_KEY) || "") || { campaign_complete: true, campaign_low_balance: true, daily_report: false, weekly_report: true, new_features: true, promos: false }; }
+    catch { return { campaign_complete: true, campaign_low_balance: true, daily_report: false, weekly_report: true, new_features: true, promos: false }; }
   });
-  const [channels, setChannels] = useState({ email: true, push: true, telegram: false });
+  const [channels, setChannels] = useState(() => {
+    if (typeof window === "undefined") return { email: true, push: false };
+    try { return JSON.parse(localStorage.getItem(CHANNELS_KEY) || "") || { email: true, push: false }; }
+    catch { return { email: true, push: false }; }
+  });
+
+  const save = () => {
+    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    localStorage.setItem(CHANNELS_KEY, JSON.stringify(channels));
+    toast.success("Preferências salvas");
+  };
 
   return (
     <>
       <Card title="Canais de notificação" desc="Onde você quer receber avisos">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <ChannelTile icon={Mail} label="E-mail" active={channels.email} onClick={() => setChannels(c => ({ ...c, email: !c.email }))} />
-          <ChannelTile icon={Smartphone} label="Push no navegador" active={channels.push} onClick={() => setChannels(c => ({ ...c, push: !c.push }))} />
-          <ChannelTile icon={Bot} label="Telegram bot" active={channels.telegram} onClick={() => setChannels(c => ({ ...c, telegram: !c.telegram }))} />
+        <div className="grid gap-3 grid-cols-2">
+          <ChannelTile icon={Mail} label="E-mail" active={channels.email} onClick={() => setChannels((c: any) => ({ ...c, email: !c.email }))} />
+          <ChannelTile icon={Smartphone} label="Push no navegador" active={channels.push} onClick={() => setChannels((c: any) => ({ ...c, push: !c.push }))} />
         </div>
       </Card>
 
       <Card title="O que você quer receber" desc="Marque os eventos que importam">
         <ul className="space-y-1">
-          <Toggle label="Campanha concluída" desc="Quando todas as DMs forem enviadas" value={prefs.campaign_complete} onChange={v => setPrefs(p => ({ ...p, campaign_complete: v }))} />
-          <Toggle label="Saldo baixo" desc="Quando seu saldo cair abaixo de 100 DMs" value={prefs.campaign_low_balance} onChange={v => setPrefs(p => ({ ...p, campaign_low_balance: v }))} />
-          <Toggle label="Relatório diário" desc="Resumo das suas campanhas todo dia às 09h" value={prefs.daily_report} onChange={v => setPrefs(p => ({ ...p, daily_report: v }))} />
-          <Toggle label="Relatório semanal" desc="Resumo de performance toda segunda" value={prefs.weekly_report} onChange={v => setPrefs(p => ({ ...p, weekly_report: v }))} />
-          <Toggle label="Novidades do produto" desc="Novas funcionalidades e melhorias" value={prefs.new_features} onChange={v => setPrefs(p => ({ ...p, new_features: v }))} />
-          <Toggle label="Promoções e descontos" desc="Cupons em pacotes de DMs" value={prefs.promos} onChange={v => setPrefs(p => ({ ...p, promos: v }))} />
+          <Toggle label="Campanha concluída" desc="Quando todas as DMs forem enviadas" value={prefs.campaign_complete} onChange={v => setPrefs((p: any) => ({ ...p, campaign_complete: v }))} />
+          <Toggle label="Saldo baixo" desc="Quando seu saldo cair abaixo de 100 DMs" value={prefs.campaign_low_balance} onChange={v => setPrefs((p: any) => ({ ...p, campaign_low_balance: v }))} />
+          <Toggle label="Relatório diário" desc="Resumo das suas campanhas todo dia às 09h" value={prefs.daily_report} onChange={v => setPrefs((p: any) => ({ ...p, daily_report: v }))} />
+          <Toggle label="Relatório semanal" desc="Resumo de performance toda segunda" value={prefs.weekly_report} onChange={v => setPrefs((p: any) => ({ ...p, weekly_report: v }))} />
+          <Toggle label="Novidades do produto" desc="Novas funcionalidades e melhorias" value={prefs.new_features} onChange={v => setPrefs((p: any) => ({ ...p, new_features: v }))} />
+          <Toggle label="Promoções e descontos" desc="Cupons em pacotes de DMs" value={prefs.promos} onChange={v => setPrefs((p: any) => ({ ...p, promos: v }))} />
         </ul>
-        <button onClick={() => toast.success("Preferências salvas")} className="mt-4 rounded-lg gradient-primary px-4 py-2 text-[12px] font-semibold text-white transition hover:brightness-110">Salvar preferências</button>
+        <button onClick={save} className="mt-4 rounded-lg gradient-primary px-4 py-2 text-[12px] font-semibold text-white transition hover:brightness-110">Salvar preferências</button>
       </Card>
     </>
   );
