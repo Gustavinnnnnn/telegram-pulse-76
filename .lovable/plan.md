@@ -1,88 +1,59 @@
-## Reformulação visual completa — TeleAds Pro
+## Pivô para plataforma de venda de DMs (Telegram)
 
-A plataforma atual está com cara de "template de IA". Vou reconstruir a identidade visual para parecer uma ferramenta real de mídia paga do Telegram, com personalidade própria — não um dashboard SaaS genérico.
+Mudança de modelo: **deixa de ser uma plataforma de Ads com saldo em dinheiro** e passa a ser uma plataforma de **pacotes fixos de DMs**. Cada disparo consome 1 DM do saldo, não há gasto monetário em campanhas.
 
-### Direção visual nova
+### 1. Banco de dados (migration)
 
-**Conceito:** "Telegram Ads Manager" — mistura da estética nativa do Telegram (bolhas de chat, gradientes azuis profundos, tipografia condensada) com a densidade de informação do Meta Ads Manager e a sofisticação do Linear/Vercel.
+- `profiles`: renomear `balance` → `dm_balance` (integer, default 0). Trigger de boas-vindas passa a creditar **100 DMs grátis** em vez de R$ 100.
+- `campaigns`: 
+  - remover `budget`, `spent`
+  - adicionar `dm_total` (int), `dm_sent` (int default 0), `media_url` (text, mídia única do disparo)
+  - manter `text`, `button_label`, `button_url`, `clicks`, `impressions`, `status`, `niche`, `objective`
+- Nova tabela `dm_packages` (catálogo público read-only): `id`, `name`, `quantity`, `price_brl`, `featured`, `sort_order`. Seed com 4 pacotes (500 / 1.000 / 5.000 / 20.000).
+- Nova tabela `dm_purchases` (substitui `wallet_transactions`): `id`, `user_id`, `package_id`, `quantity`, `price_brl`, `status` (paid/pending), `created_at`. RLS owner-only.
+- Função `purchase_dm_package(package_id)` SECURITY DEFINER: cria `dm_purchases` (paid simulado) + incrementa `dm_balance` atomicamente.
+- Função `consume_dms(campaign_id, qty)` SECURITY DEFINER: valida saldo, decrementa `dm_balance`, incrementa `campaigns.dm_sent`, marca campanha como `completed` quando `dm_sent >= dm_total`.
 
-**Mudanças de identidade:**
-- **Tipografia dupla:** `Space Grotesk` (display, números grandes, headlines) + `Inter` (corpo). Numerais tabulares em todas as métricas.
-- **Paleta expandida:** fundo `#0A1119` (mais profundo que Telegram), superfícies em camadas (`#0F1A24` → `#162433` → `#1E3247`), azul Telegram `#229ED9` como acento + verde-ciano `#2EE6B6` para performance positiva e laranja `#FF8A3D` para alertas. Gradientes mesh sutis no fundo.
-- **Bordas e sombras:** bordas internas com `inset 0 1px 0 rgba(255,255,255,0.04)` (efeito vidro), sombras coloridas (azul, verde) em vez de pretas neutras.
-- **Iconografia:** ícones outline custom-feel com peso 1.5px, sempre em containers quadrados com cantos `rounded-xl` e leve gradiente — não os Lucide soltos padrão.
-- **Animações:** números que animam ao carregar (count-up), gráficos com gradiente animado, micro-pulse nos status "ao vivo".
+### 2. Frontend — rotas e telas
 
-### Páginas a reconstruir
+- **Renomear** `/wallet` → `/store` (Loja de DMs). Substituir `BalanceCard` (cartão de crédito virtual) por **grid de pacotes** com ícone de pacote, quantidade grande (ex: "1.000 DMs"), preço, badge "Mais popular" e CTA "Comprar agora". Histórico vira lista de compras (data, pacote, qtd, preço).
+- **Dashboard `/`**: trocar KPIs de dinheiro por:
+  1. DMs disponíveis (saldo) — tile hero grande
+  2. DMs enviadas (acumulado)
+  3. DMs restantes em campanhas ativas
+  4. Total de campanhas
+  5. Cliques totais
+  6. CTR médio
+  Manter gráfico de performance diária (impressões/cliques/conversões), funnel, heatmap, feed ao vivo, top campanhas (mostrando barra `dm_sent / dm_total` em vez de gasto/orçamento).
+- **`/campaigns/new`**: trocar etapa de "orçamento (R$)" por "**Quantidade de DMs**" com slider (mínimo 100, máximo = saldo do usuário) + cards de atalho (250 / 500 / 1k / saldo total). Validação: bloqueia avançar se saldo insuficiente, com CTA "Comprar mais DMs" → `/store`. Manter wizard de 5 etapas, preview Telegram, segmentação.
+- **`/campaigns`**: tabela passa a mostrar `Progresso (dm_sent/dm_total)` com barra, `Cliques`, `CTR`, `Status`. Remove colunas "Gasto" e "Orçamento".
+- **`/campaigns/$id`**: header com barra grande de progresso `[████░░] 60% — 600/1.000 DMs enviadas`. Aba Overview troca métricas monetárias por DMs entregues/restantes. Mantém abas Entrega/Público/Destinatários.
+- **AppLayout**:
+  - Sidebar: trocar item "Carteira" por "**Loja**" (ícone `Package`). Indicador de saldo de DMs no topo da sidebar (chip com `Zap` + número).
+  - **Mobile**: adicionar **bottom nav fixo** com 5 ícones (Dashboard, Campanhas, **+ Criar** central destacado, Loja, Perfil) — só aparece em `< md`. Sidebar vira off-canvas em mobile.
 
-**1. Dashboard (`/`)** — virar uma central de operações
-- Header executivo com: nome do anunciante + chip "ID: TLG-XXXXX" + período selecionável (Hoje / 7d / 30d / Custom) + botão "Exportar relatório".
-- Faixa de 4 métricas hero em "tiles de vidro" com sparkline interno e badge de variação animada.
-- Grid principal:
-  - Gráfico grande "Performance por hora" (área empilhada: impressões / cliques / conversões) ocupando 8 cols.
-  - Painel lateral 4 cols: "Top campanhas hoje" com mini-progress bars de gasto vs orçamento.
-- Linha inferior: 
-  - Heatmap 24h × 7d de melhor horário de entrega.
-  - Funil visual (Impressões → Cliques → DMs → Conversões) com taxas entre etapas.
-  - Mapa de distribuição por nicho (donut customizado, não recharts default).
-- Feed lateral "Atividade ao vivo" com pulse verde mostrando eventos chegando em tempo real (simulado).
+### 3. Lógica/queries
 
-**2. Criar campanha (`/campaigns/new`)** — virar um wizard cinematográfico
-- Layout split-screen: lado esquerdo formulário com stepper vertical numerado (5 etapas), lado direito **preview ao vivo do anúncio renderizado dentro de um mockup de chat do Telegram** (bolha azul, avatar do canal, botão inline) que atualiza em tempo real conforme o usuário digita.
-- Cada etapa em card com glassmorphism, transições suaves entre etapas.
-- Etapa de objetivo: 3 cards grandes com ilustração SVG animada em cada um (não só ícone Lucide).
-- Etapa de orçamento: slider customizado com marcadores de "alcance estimado" calculado dinamicamente, gráfico mini mostrando projeção de impressões.
-- Etapa de segmentação: chips coloridos por categoria + mapa de calor de canais Telegram disponíveis por nicho.
-- Footer fixo com resumo (orçamento, alcance estimado, CPM previsto) + CTA grande gradiente.
+- `src/lib/queries.ts`: adicionar `useDMBalance()`, `usePackages()`, `usePurchases()`, `usePurchasePackage()`, `useConsumeDMs()`. Remover hooks de `wallet_transactions`.
+- `src/lib/fake-metrics.ts`: ajustar para gerar `dmsSent` proporcional ao tempo decorrido desde criação da campanha até atingir `dm_total`. Cliques/impressões/CTR continuam derivados.
+- Simulador de progresso: ao iniciar campanha (status `active`), avança `dm_sent` no client a cada N segundos via interval (apenas visual; persistência opcional via `consume_dms` em batch a cada minuto).
 
-**3. Lista de campanhas (`/campaigns`)** — densidade Meta Ads Manager
-- Tabela completa com colunas: checkbox, status (toggle inline), nome + objetivo, entrega (barra de progresso), gasto / orçamento, impressões, cliques, CTR, CPC, conversões, ações.
-- Toolbar com filtros multi-select (status, objetivo, nicho, período), busca, "colunas customizáveis", "exportar".
-- Cada linha expandível mostrando mini gráfico inline.
-- Hover state com destaque azul lateral.
-- Mobile: cards detalhados (não a tabela).
+### 4. Visual / UX
 
-**4. Detalhe da campanha (`/campaigns/$id`)** — manter as abas mas reformular cada uma
-- Header com breadcrumb + status pill animado + ações (pausar / duplicar / editar / excluir).
-- Faixa de KPIs com comparação vs período anterior.
-- Aba Overview: combinação de gráfico principal + preview do anúncio no mockup Telegram + score de qualidade circular.
-- Aba Destinatários: feed com avatares gerados (gradiente baseado no nome), badges de status animados, infinite scroll simulado.
-
-**5. Carteira (`/wallet`)** — visual de "fintech ads"
-- Card de saldo grande com gradiente animado (estilo cartão de crédito virtual), número grande tipográfico.
-- Histórico em timeline vertical (não tabela), agrupado por data.
-- Modal de depósito com seleção de valores rápidos (R$ 50, 100, 500, 1k) + input custom + métodos de pagamento ilustrados.
-
-**6. Sidebar/AppLayout** — repaginar
-- Sidebar mais estreita com ícones grandes + label, seção "Ferramentas" separada de "Conta".
-- Logo TeleAds com mark customizado (não emoji).
-- Indicador de campanhas ativas com bolinha pulsante verde no item "Campanhas".
-- Topbar com: search global (Cmd+K visual), seletor de conta, notificações com badge, avatar.
-
-### Componentes novos a criar
-
-- `src/components/MetricTile.tsx` — tile de métrica com sparkline embutido, count-up, badge de variação.
-- `src/components/TelegramAdPreview.tsx` — mockup fiel de mensagem patrocinada do Telegram (bolha, avatar, botão inline, "Sponsored").
-- `src/components/LiveActivityFeed.tsx` — feed pulsante de eventos.
-- `src/components/HourlyHeatmap.tsx` — heatmap 24×7 SVG custom.
-- `src/components/ConversionFunnel.tsx` — funil visual com taxas.
-- `src/components/CampaignTable.tsx` — tabela densa estilo Ads Manager.
-- `src/components/StepperVertical.tsx` — stepper numerado vertical.
-- `src/components/QualityScore.tsx` — gauge circular de qualidade.
-- `src/components/BalanceCard.tsx` — card "cartão virtual" da carteira.
-- `src/components/Logo.tsx` — mark TeleAds.
-
-### Detalhes técnicos
-
-- Adicionar Google Font `Space Grotesk` via `<link>` no `__root.tsx`.
-- Estender `src/styles.css` com: nova paleta multi-camada, gradientes mesh, classes utilitárias `.glass`, `.tile`, `.tabular`, animação `count-up` e `pulse-live`.
-- Criar `src/lib/format.ts` com helpers de formatação BR (R$, números compactos 1.2k / 3.4M, percentuais).
-- Criar `src/hooks/useCountUp.ts` para animar números.
-- Manter toda a lógica de dados (queries, fake-metrics, auth) — só repaginar UI.
-- Sem alterações de schema/backend.
+- Manter design system TeleAds Pro (Space Grotesk, paleta azul Telegram, tiles glass, animações count-up).
+- Pacotes na loja: cards com gradiente sutil por tamanho (500 azul, 1k cyan, 5k magenta, 20k dourado), ícone `Package`/`Zap`, animação de hover (scale 1.03 + glow).
+- Toasts (`sonner`) em compra de pacote, criação/pausa de campanha e erro de saldo insuficiente.
+- Barra de progresso DMs com gradiente animado e contador `tabular`.
 
 ### Fora do escopo
 
-- Não mexer em RLS, migrations, autenticação ou geração de métricas.
-- Não adicionar novas rotas além das existentes.
-- Não integrar bot Telegram real.
+- Integração real com Telegram Bot API e fila BullMQ (mantém simulação determinística — backend real fica para iteração futura).
+- Gateway de pagamento real (compra é simulada e credita DMs imediatamente; integração Stripe/Pix pode entrar depois).
+- Não mexer em auth, RLS de tabelas existentes além das mudanças listadas.
+
+### Arquivos a criar / editar
+
+- **Novos**: `src/components/PackageCard.tsx`, `src/components/DMProgressBar.tsx`, `src/components/MobileBottomNav.tsx`, `src/components/DMBalanceChip.tsx`, `src/routes/_app.store.tsx`.
+- **Editar**: `AppLayout.tsx`, `_app.index.tsx`, `_app.campaigns.index.tsx`, `_app.campaigns.new.tsx`, `_app.campaigns.$id.tsx`, `queries.ts`, `fake-metrics.ts`, `format.ts` (helper `dms(n)`).
+- **Remover**: `_app.wallet.tsx`, `BalanceCard.tsx` (substituídos).
+- **Migration**: schema + seed de pacotes + funções RPC.

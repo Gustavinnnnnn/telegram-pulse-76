@@ -1,7 +1,6 @@
-// Deterministic fake-but-realistic metrics for campaigns.
-// While the real distribution backend isn't ready, we generate believable
-// numbers from the campaign id + created_at + budget so the same campaign
-// always shows the same evolving stats (and grows over time).
+// Deterministic fake-but-realistic metrics for DM campaigns.
+// Numbers grow with time so the same campaign always shows consistent
+// evolving stats. Built around DM dispatch (no money / budget concept).
 
 import type { Campaign } from "./queries";
 
@@ -26,36 +25,35 @@ export interface Recipient {
   id: string;
   name: string;
   username: string;
-  avatar: string; // emoji
+  avatar: string;
   status: "received" | "blocked" | "not_received" | "replied";
-  time: string; // "há X min"
+  time: string;
 }
 
 export interface FakeMetrics {
-  impressions: number;
-  views: number;
-  clicks: number;
-  ctr: number; // %
-  cpc: number; // R$
-  cpm: number;
-  reach: number;
-  frequency: number;
-  spent: number;
-  budget: number;
-  // Telegram-specific
+  // DM core
+  dmTotal: number;
   dmsSent: number;
   dmsReceived: number;
   dmsBlocked: number;
   dmsNotReceived: number;
-  approvalRate: number; // %
-  audienceQuality: number; // %
+  dmsRemaining: number;
+  progressPct: number; // 0-100
+  // Engagement
+  impressions: number;
+  views: number;
+  clicks: number;
+  ctr: number;
+  reach: number;
+  frequency: number;
+  approvalRate: number;
+  audienceQuality: number;
   conversions: number;
-  costPerConversion: number;
   // Series
-  hourly: { hour: string; impressions: number; clicks: number; spent: number }[];
-  daily: { day: string; impressions: number; clicks: number; spent: number; conversions: number }[];
+  hourly: { hour: string; sent: number; clicks: number }[];
+  daily: { day: string; sent: number; clicks: number; conversions: number; impressions: number }[];
   recipients: Recipient[];
-  channels: { name: string; impressions: number; clicks: number }[];
+  channels: { name: string; sent: number; clicks: number }[];
   demographics: { label: string; value: number }[];
   devices: { label: string; value: number }[];
 }
@@ -68,57 +66,57 @@ function pick<T>(arr: T[], r: () => number): T {
   return arr[Math.floor(r() * arr.length)];
 }
 
-// Generate fake metrics; intensity grows with hours since campaign started
 export function generateMetrics(c: Campaign): FakeMetrics {
   const r = rng(c.id + c.name);
   const now = Date.now();
   const created = new Date(c.created_at).getTime();
   const hoursLive = Math.max(0.5, (now - created) / 3600_000);
   const isActive = c.status === "active" || c.status === "completed";
-  const factor = isActive ? Math.min(hoursLive, 24 * 30) : 0;
+  const isCompleted = c.status === "completed";
 
-  const budget = Number(c.budget) || 100;
-  // Pace: 2-5% of budget per hour, capped at budget
-  const pace = 0.02 + r() * 0.03;
-  const spentRaw = Math.min(budget, factor * pace * budget);
-  const spent = c.status === "draft" ? 0 : Math.round(spentRaw * 100) / 100;
+  const dmTotal = c.dm_total || 1000;
 
-  const cpm = 1.2 + r() * 1.8; // R$/1000 imp
-  const impressions = Math.floor((spent / cpm) * 1000) + (isActive ? Math.floor(factor * (40 + r() * 80)) : 0);
-  const ctrPct = 1.5 + r() * 4; // 1.5% - 5.5%
-  const clicks = Math.floor(impressions * (ctrPct / 100));
-  const ctr = impressions ? +(clicks / impressions * 100).toFixed(2) : 0;
-  const cpc = clicks ? +(spent / clicks).toFixed(2) : 0;
-  const reach = Math.floor(impressions * (0.55 + r() * 0.25));
-  const frequency = reach ? +(impressions / reach).toFixed(2) : 0;
-  const views = Math.floor(impressions * (0.6 + r() * 0.3));
+  // Pace: 4-9% of total per hour
+  const pace = 0.04 + r() * 0.05;
+  const projected = isActive ? Math.min(dmTotal, hoursLive * pace * dmTotal) : 0;
+  // Persisted dm_sent (db) takes priority if higher
+  const dmsSent = isCompleted
+    ? dmTotal
+    : Math.max(c.dm_sent || 0, Math.floor(projected));
 
-  // Telegram delivery
-  const dmsSent = Math.floor(impressions * (0.3 + r() * 0.2));
-  const blockRate = 0.04 + r() * 0.06;
-  const notReceivedRate = 0.05 + r() * 0.08;
+  const blockRate = 0.04 + r() * 0.05;
+  const notReceivedRate = 0.04 + r() * 0.06;
   const dmsBlocked = Math.floor(dmsSent * blockRate);
   const dmsNotReceived = Math.floor(dmsSent * notReceivedRate);
   const dmsReceived = Math.max(0, dmsSent - dmsBlocked - dmsNotReceived);
+  const dmsRemaining = Math.max(0, dmTotal - dmsSent);
+  const progressPct = dmTotal > 0 ? Math.min(100, (dmsSent / dmTotal) * 100) : 0;
+
+  // Each delivered DM ~ 1.4 impressions, click rate 5-12%
+  const impressions = Math.floor(dmsReceived * (1.2 + r() * 0.5));
+  const ctrPct = 5 + r() * 7;
+  const clicks = Math.floor(dmsReceived * (ctrPct / 100));
+  const ctr = dmsReceived ? +((clicks / dmsReceived) * 100).toFixed(2) : 0;
+  const reach = Math.floor(impressions * (0.65 + r() * 0.2));
+  const frequency = reach ? +(impressions / reach).toFixed(2) : 0;
+  const views = Math.floor(impressions * (0.7 + r() * 0.25));
 
   const approvalRate = +(85 + r() * 13).toFixed(1);
   const audienceQuality = +(72 + r() * 22).toFixed(1);
 
-  const convRate = 0.04 + r() * 0.08;
+  const convRate = 0.06 + r() * 0.08;
   const conversions = Math.floor(clicks * convRate);
-  const costPerConversion = conversions ? +(spent / conversions).toFixed(2) : 0;
 
   // Hourly series — last 24h
   const hourly = Array.from({ length: 24 }, (_, i) => {
     const h = 23 - i;
     const t = new Date(now - h * 3600_000);
     const variance = 0.4 + r() * 1.2;
-    const imps = Math.floor((impressions / 24) * variance);
+    const sent = Math.floor((dmsSent / 24) * variance);
     return {
       hour: `${t.getHours().toString().padStart(2, "0")}h`,
-      impressions: imps,
-      clicks: Math.floor(imps * (ctr / 100)),
-      spent: +(imps * (cpm / 1000)).toFixed(2),
+      sent,
+      clicks: Math.floor(sent * (ctr / 100)),
     };
   });
 
@@ -128,14 +126,15 @@ export function generateMetrics(c: Campaign): FakeMetrics {
     const t = new Date(now - d * 86400_000);
     const days = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
     const variance = 0.6 + r() * 0.9;
-    const imps = Math.floor((impressions / 7) * variance);
-    const cl = Math.floor(imps * (ctr / 100));
+    const sent = Math.floor((dmsSent / 7) * variance);
+    const cl = Math.floor(sent * (ctr / 100));
+    const imps = Math.floor(sent * 1.3);
     return {
       day: days[t.getDay()],
-      impressions: imps,
+      sent,
       clicks: cl,
-      spent: +(imps * (cpm / 1000)).toFixed(2),
       conversions: Math.floor(cl * convRate),
+      impressions: imps,
     };
   });
 
@@ -157,11 +156,10 @@ export function generateMetrics(c: Campaign): FakeMetrics {
     };
   });
 
-  // Channels distribution
   const channelNames = ["Cripto Brasil", "Renda Online BR", "Tech Today", "Gamer Hub", "News Flash", "Lifestyle Pro", "Trade Alerts", "Bolsa em Ação"];
   const channels = channelNames.slice(0, 5).map((name) => ({
     name,
-    impressions: Math.floor(impressions * (0.08 + r() * 0.22)),
+    sent: Math.floor(dmsSent * (0.08 + r() * 0.22)),
     clicks: Math.floor(clicks * (0.08 + r() * 0.22)),
   }));
 
@@ -179,11 +177,9 @@ export function generateMetrics(c: Campaign): FakeMetrics {
   ];
 
   return {
-    impressions, views, clicks, ctr, cpc, cpm: +cpm.toFixed(2), reach, frequency,
-    spent, budget,
-    dmsSent, dmsReceived, dmsBlocked, dmsNotReceived,
-    approvalRate, audienceQuality,
-    conversions, costPerConversion,
+    dmTotal, dmsSent, dmsReceived, dmsBlocked, dmsNotReceived, dmsRemaining, progressPct,
+    impressions, views, clicks, ctr, reach, frequency,
+    approvalRate, audienceQuality, conversions,
     hourly, daily, recipients, channels, demographics, devices,
   };
 }
