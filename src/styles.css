@@ -160,6 +160,9 @@
   html, body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
   }
   body {
     font-family: var(--font-sans);
@@ -173,6 +176,13 @@
   }
   h1, h2, h3, h4, .font-display { font-family: var(--font-display); letter-spacing: -0.015em; }
   .tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+  /* Prevent iOS double-tap zoom on inputs and zoom-on-focus */
+  input, select, textarea { font-size: 16px; }
+  @media (min-width: 640px) {
+    input, select, textarea { font-size: inherit; }
+  }
+  /* Prevent any rogue overflow inside grid items */
+  main, section, article, .tile { min-width: 0; }
 }
 
 @layer utilities {

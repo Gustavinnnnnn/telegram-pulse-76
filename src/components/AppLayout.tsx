@@ -162,7 +162,7 @@ export function AppLayout() {
           </div>
         </header>
 
-        <main className="px-4 pb-28 pt-5 md:px-6 md:pb-10 animate-[fade-in_0.4s_ease-out]">
+        <main className="overflow-x-hidden px-3 pb-28 pt-4 sm:px-4 md:px-6 md:pb-10 animate-[fade-in_0.4s_ease-out]">
           <Outlet />
         </main>
       </div>
