@@ -142,13 +142,14 @@ export function AppLayout() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="hidden items-center gap-1.5 rounded-full border border-border/60 bg-surface-1/60 px-3 py-1.5 sm:flex">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Saldo</span>
-              <span className="font-display text-sm font-bold tabular text-gradient-mint">
-                R$ {Number(profile?.balance ?? 0).toFixed(2).replace(".", ",")}
+            <Link to="/store" className="hidden items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 transition hover:bg-primary/15 sm:flex">
+              <Zap className="h-3 w-3 text-primary" />
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">DMs</span>
+              <span className="font-display text-sm font-bold tabular text-gradient-primary">
+                {(profile?.dm_balance ?? 0).toLocaleString("pt-BR")}
               </span>
-              <Link to="/wallet" className="ml-1 rounded-md gradient-primary px-1.5 py-0.5 text-[9px] font-bold text-white">+</Link>
-            </div>
+              <span className="ml-1 rounded-md gradient-primary px-1.5 py-0.5 text-[9px] font-bold text-white">+</span>
+            </Link>
 
             <button className="relative flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-surface-1/60 text-muted-foreground transition hover:text-foreground">
               <Bell className="h-3.5 w-3.5" />
