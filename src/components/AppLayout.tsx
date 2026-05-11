@@ -7,7 +7,7 @@ import { Logo, Wordmark } from "./Logo";
 import { shortId } from "@/lib/format";
 
 const mainNav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/campaigns", label: "Campanhas", icon: Megaphone },
   { to: "/campaigns/new", label: "Criar campanha", icon: PlusCircle, accent: true },
 ] as const;
