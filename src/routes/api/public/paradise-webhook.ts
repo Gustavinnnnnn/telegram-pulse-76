@@ -29,7 +29,7 @@ export const Route = createFileRoute("/api/public/paradise-webhook")({
           );
 
           if (status === "approved") {
-            await supabase.rpc("confirm_payment_intent", { _reference: reference, _gateway_tx: txId ?? null });
+            await supabase.rpc("confirm_payment_intent", { _reference: reference, _gateway_tx: txId ?? "" });
           } else {
             await supabase.from("payment_intents")
               .update({ status, gateway_transaction_id: txId ?? null })
