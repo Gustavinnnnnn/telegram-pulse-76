@@ -186,6 +186,69 @@ export type Database = {
           },
         ]
       }
+      payment_intents: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          customer_document: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          expires_at: string | null
+          gateway_transaction_id: string | null
+          id: string
+          package_id: string
+          package_name: string
+          qr_code: string | null
+          qr_code_base64: string | null
+          quantity: number
+          reference: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          customer_document: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          expires_at?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          package_id: string
+          package_name: string
+          qr_code?: string | null
+          qr_code_base64?: string | null
+          quantity: number
+          reference: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          customer_document?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string
+          expires_at?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          package_id?: string
+          package_name?: string
+          qr_code?: string | null
+          qr_code_base64?: string | null
+          quantity?: number
+          reference?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -215,6 +278,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      confirm_payment_intent: {
+        Args: { _gateway_tx: string; _reference: string }
+        Returns: Json
+      }
       consume_dms: {
         Args: { _campaign_id: string; _qty: number }
         Returns: Json
