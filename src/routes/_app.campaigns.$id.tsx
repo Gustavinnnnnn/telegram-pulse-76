@@ -124,9 +124,25 @@ function CampaignDetailPage() {
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <MetricTile label="Conversões" value={m.conversions} icon={Target} delta={23.4} accent="primary" />
-        <MetricTile label="CPC" value={m.cpc} format="currency" icon={Activity} accent="cyan" />
-        <MetricTile label="CPM" value={m.cpm} format="currency" icon={TrendingUp} accent="warning" />
-        <MetricTile label="Investido" value={m.spent} format="currency" icon={Wallet} delta={-2.1} accent="magenta" />
+        <MetricTile label="DMs enviadas" value={m.dmsSent} icon={Send} delta={11.2} accent="cyan" />
+        <MetricTile label="Frequência" value={m.frequency} icon={Activity} accent="warning" />
+        <MetricTile label="Restantes" value={m.dmsRemaining} icon={Wallet} accent="magenta" />
+      </div>
+
+      {/* DM progress hero */}
+      <div className="tile p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Progresso do disparo</p>
+            <p className="font-display text-2xl sm:text-3xl font-bold tabular text-gradient-primary">
+              {compactNumber(m.dmsSent)} <span className="text-base text-muted-foreground font-medium">/ {compactNumber(m.dmTotal)} DMs</span>
+            </p>
+          </div>
+          <span className="font-display text-2xl font-bold tabular text-primary">{m.progressPct.toFixed(1)}%</span>
+        </div>
+        <div className="h-3 overflow-hidden rounded-full bg-surface-3/60">
+          <div className="h-full gradient-primary transition-all duration-700" style={{ width: `${m.progressPct}%` }} />
+        </div>
       </div>
 
       {/* Tabs */}
@@ -200,28 +216,28 @@ function CampaignDetailPage() {
                 </div>
               </div>
               <div className="mt-3 rounded-xl border border-border/40 bg-surface-1/60 p-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Custo por conversão</p>
-                <p className="mt-0.5 font-display text-2xl font-bold tabular text-gradient-mint">{currency(m.costPerConversion)}</p>
-                <p className="text-[10.5px] text-muted-foreground">{m.conversions} conversões realizadas</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Conversões</p>
+                <p className="mt-0.5 font-display text-2xl font-bold tabular text-gradient-mint">{compactNumber(m.conversions)}</p>
+                <p className="text-[10.5px] text-muted-foreground">cliques que viraram ação</p>
               </div>
             </div>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-12">
             <div className="tile p-5 lg:col-span-7">
-              <h2 className="font-display text-base font-bold">Investimento por dia</h2>
+              <h2 className="font-display text-base font-bold">DMs enviadas por dia</h2>
               <p className="text-[11px] text-muted-foreground">Últimos 7 dias</p>
               <div className="mt-3 h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={m.daily} margin={{ top: 5, right: 8, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="2 4" stroke="oklch(0.3 0.02 240 / 0.4)" />
                     <XAxis dataKey="day" stroke="oklch(0.62 0.02 235)" fontSize={11} axisLine={false} tickLine={false} />
-                    <YAxis stroke="oklch(0.62 0.02 235)" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => `R$${compactNumber(v)}`} />
+                    <YAxis stroke="oklch(0.62 0.02 235)" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(v) => compactNumber(v)} />
                     <Tooltip
                       contentStyle={{ backgroundColor: "oklch(0.235 0.026 236)", border: "1px solid oklch(0.38 0.025 234)", borderRadius: "12px", fontSize: "11px" }}
-                      formatter={(v: number) => [currency(v), "Gasto"]}
+                      formatter={(v: number) => [compactNumber(v), "DMs"]}
                     />
-                    <Bar dataKey="spent" fill="oklch(0.69 0.15 230)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="sent" fill="oklch(0.69 0.15 230)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -235,6 +251,8 @@ function CampaignDetailPage() {
                 text={campaign.text}
                 description={campaign.description ?? undefined}
                 buttonLabel={campaign.button_label}
+                mediaUrl={campaign.media_url ?? undefined}
+                simulateDelivery
               />
             </div>
           </div>
@@ -279,7 +297,7 @@ function CampaignDetailPage() {
               <p className="text-[11px] text-muted-foreground">Onde sua campanha mais performou</p>
               <ul className="mt-3 space-y-2">
                 {m.channels.map((ch) => {
-                  const max = Math.max(...m.channels.map((c) => c.impressions), 1);
+                  const max = Math.max(...m.channels.map((c) => c.sent), 1);
                   return (
                     <li key={ch.name} className="rounded-xl border border-border/40 bg-surface-1/40 p-3">
                       <div className="flex items-center justify-between text-[12px]">
@@ -287,9 +305,9 @@ function CampaignDetailPage() {
                         <span className="text-[10.5px] tabular text-muted-foreground">{compactNumber(ch.clicks)} cliques</span>
                       </div>
                       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-3/60">
-                        <div className="h-full gradient-primary" style={{ width: `${(ch.impressions / max) * 100}%` }} />
+                        <div className="h-full gradient-primary" style={{ width: `${(ch.sent / max) * 100}%` }} />
                       </div>
-                      <p className="mt-1 text-[10px] tabular text-muted-foreground">{compactNumber(ch.impressions)} impressões</p>
+                      <p className="mt-1 text-[10px] tabular text-muted-foreground">{compactNumber(ch.sent)} DMs enviadas</p>
                     </li>
                   );
                 })}

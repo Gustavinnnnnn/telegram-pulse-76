@@ -20,7 +20,7 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/" });
+    if (!loading && user) navigate({ to: "/dashboard" });
   }, [user, loading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,12 +41,12 @@ function AuthPage() {
         const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
         if (signInErr) throw signInErr;
         toast.success("Conta criada!");
-        navigate({ to: "/" });
+        navigate({ to: "/dashboard" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Bem-vindo de volta!");
-        navigate({ to: "/" });
+        navigate({ to: "/dashboard" });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao autenticar");
@@ -66,7 +66,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/" });
+    navigate({ to: "/dashboard" });
   };
 
   const inputCls =
