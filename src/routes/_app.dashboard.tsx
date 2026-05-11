@@ -16,7 +16,7 @@ import { generateMetrics } from "@/lib/fake-metrics";
 import { compactNumber, shortId } from "@/lib/format";
 import { useAuth } from "@/contexts/AuthContext";
 
-export const Route = createFileRoute("/_app/")({
+export const Route = createFileRoute("/_app/dashboard")({
   component: DashboardPage,
 });
 
