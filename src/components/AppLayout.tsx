@@ -1,5 +1,5 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Megaphone, PlusCircle, Wallet, Settings, LogOut, Search, Bell, ChevronDown } from "lucide-react";
+import { LayoutDashboard, Megaphone, PlusCircle, Package, Settings, LogOut, Search, Bell, ChevronDown, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProfile, useCampaigns } from "@/lib/queries";
 import { useAuth } from "@/contexts/AuthContext";
