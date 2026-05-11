@@ -17,6 +17,7 @@ import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCampaignsIndexRouteImport } from './routes/_app.campaigns.index'
 import { Route as ApiPublicParadiseWebhookRouteImport } from './routes/api/public/paradise-webhook'
+import { Route as AppCheckoutIntentIdRouteImport } from './routes/_app.checkout.$intentId'
 import { Route as AppCampaignsNewRouteImport } from './routes/_app.campaigns.new'
 import { Route as AppCampaignsIdRouteImport } from './routes/_app.campaigns.$id'
 
@@ -60,6 +61,11 @@ const ApiPublicParadiseWebhookRoute =
     path: '/api/public/paradise-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AppCheckoutIntentIdRoute = AppCheckoutIntentIdRouteImport.update({
+  id: '/checkout/$intentId',
+  path: '/checkout/$intentId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCampaignsNewRoute = AppCampaignsNewRouteImport.update({
   id: '/campaigns/new',
   path: '/campaigns/new',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/store': typeof AppStoreRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/campaigns/new': typeof AppCampaignsNewRoute
+  '/checkout/$intentId': typeof AppCheckoutIntentIdRoute
   '/api/public/paradise-webhook': typeof ApiPublicParadiseWebhookRoute
   '/campaigns/': typeof AppCampaignsIndexRoute
 }
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/store': typeof AppStoreRoute
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/campaigns/new': typeof AppCampaignsNewRoute
+  '/checkout/$intentId': typeof AppCheckoutIntentIdRoute
   '/api/public/paradise-webhook': typeof ApiPublicParadiseWebhookRoute
   '/campaigns': typeof AppCampaignsIndexRoute
 }
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/_app/store': typeof AppStoreRoute
   '/_app/campaigns/$id': typeof AppCampaignsIdRoute
   '/_app/campaigns/new': typeof AppCampaignsNewRoute
+  '/_app/checkout/$intentId': typeof AppCheckoutIntentIdRoute
   '/api/public/paradise-webhook': typeof ApiPublicParadiseWebhookRoute
   '/_app/campaigns/': typeof AppCampaignsIndexRoute
 }
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/store'
     | '/campaigns/$id'
     | '/campaigns/new'
+    | '/checkout/$intentId'
     | '/api/public/paradise-webhook'
     | '/campaigns/'
   fileRoutesByTo: FileRoutesByTo
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/store'
     | '/campaigns/$id'
     | '/campaigns/new'
+    | '/checkout/$intentId'
     | '/api/public/paradise-webhook'
     | '/campaigns'
   id:
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/_app/store'
     | '/_app/campaigns/$id'
     | '/_app/campaigns/new'
+    | '/_app/checkout/$intentId'
     | '/api/public/paradise-webhook'
     | '/_app/campaigns/'
   fileRoutesById: FileRoutesById
@@ -208,6 +220,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicParadiseWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/checkout/$intentId': {
+      id: '/_app/checkout/$intentId'
+      path: '/checkout/$intentId'
+      fullPath: '/checkout/$intentId'
+      preLoaderRoute: typeof AppCheckoutIntentIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/campaigns/new': {
       id: '/_app/campaigns/new'
       path: '/campaigns/new'
@@ -231,6 +250,7 @@ interface AppRouteChildren {
   AppStoreRoute: typeof AppStoreRoute
   AppCampaignsIdRoute: typeof AppCampaignsIdRoute
   AppCampaignsNewRoute: typeof AppCampaignsNewRoute
+  AppCheckoutIntentIdRoute: typeof AppCheckoutIntentIdRoute
   AppCampaignsIndexRoute: typeof AppCampaignsIndexRoute
 }
 
@@ -240,6 +260,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppStoreRoute: AppStoreRoute,
   AppCampaignsIdRoute: AppCampaignsIdRoute,
   AppCampaignsNewRoute: AppCampaignsNewRoute,
+  AppCheckoutIntentIdRoute: AppCheckoutIntentIdRoute,
   AppCampaignsIndexRoute: AppCampaignsIndexRoute,
 }
 
@@ -254,3 +275,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
