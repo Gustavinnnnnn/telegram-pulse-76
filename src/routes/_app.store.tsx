@@ -9,6 +9,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import QRCode from "qrcode";
 
+function normalizeQrImageSrc(value?: string | null) {
+  if (!value) return null;
+  const cleaned = value.trim();
+  if (!cleaned) return null;
+  if (cleaned.startsWith("data:image/")) return cleaned;
+  if (cleaned.startsWith("http://") || cleaned.startsWith("https://")) return cleaned;
+  const base64 = cleaned.replace(/\s/g, "");
+  if (/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) {
+    return `data:image/png;base64,${base64}`;
+  }
+  return null;
+}
+
 export const Route = createFileRoute("/_app/store")({
   component: StorePage,
 });
@@ -43,16 +56,18 @@ function StorePage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
 
+  const gatewayQrSrc = useMemo(() => normalizeQrImageSrc(pix?.qr_code_base64), [pix?.qr_code_base64]);
+  const visibleQrSrc = gatewayQrSrc || qrDataUrl;
+
   // Generate QR code locally from PIX copy-paste string when gateway doesn't return base64
   useEffect(() => {
-    if (!pix) { setQrDataUrl(null); return; }
-    if (pix.qr_code_base64) { setQrDataUrl(null); return; }
+    if (!pix?.qr_code) { setQrDataUrl(null); return; }
     let cancelled = false;
-    QRCode.toDataURL(pix.qr_code, { width: 320, margin: 1, errorCorrectionLevel: "M" })
+    QRCode.toDataURL(pix.qr_code, { width: 360, margin: 2, errorCorrectionLevel: "H", color: { dark: "#000000", light: "#ffffff" } })
       .then((url) => { if (!cancelled) setQrDataUrl(url); })
       .catch(() => { if (!cancelled) setQrDataUrl(null); });
     return () => { cancelled = true; };
-  }, [pix]);
+  }, [pix?.qr_code]);
 
   const balance = profile?.dm_balance ?? 0;
   const totalBought = useMemo(() => purchases.reduce((a, p) => a + p.quantity, 0), [purchases]);
@@ -295,8 +310,8 @@ function StorePage() {
 
       {/* Checkout modal */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4 overflow-y-auto">
-          <div className="w-full h-full sm:h-auto sm:max-w-lg sm:max-h-[92vh] overflow-y-auto sm:rounded-3xl border-0 sm:border sm:border-border/60 bg-surface-1 p-5 sm:p-6 shadow-2xl flex flex-col justify-center sm:block min-h-screen sm:min-h-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-md p-0 sm:p-4 overflow-y-auto">
+          <div className="w-full min-h-screen sm:min-h-0 sm:h-auto sm:max-w-xl sm:max-h-[94vh] overflow-y-auto sm:rounded-3xl border-0 sm:border sm:border-border/60 bg-surface-1 p-5 sm:p-6 shadow-2xl">
             <div className="flex items-start justify-between">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-primary">{pix ? "Pagamento PIX" : "Checkout"}</p>
@@ -340,10 +355,8 @@ function StorePage() {
             ) : (
               <div className="mt-4 space-y-4">
                 <div className="rounded-2xl border border-border/40 bg-white p-3 flex items-center justify-center">
-                  {pix.qr_code_base64 ? (
-                    <img src={pix.qr_code_base64} alt="QR Code PIX" className="h-64 w-64 object-contain" />
-                  ) : qrDataUrl ? (
-                    <img src={qrDataUrl} alt="QR Code PIX" className="h-64 w-64 object-contain" />
+                  {visibleQrSrc ? (
+                    <img src={visibleQrSrc} alt="QR Code PIX" className="h-64 w-64 object-contain" />
                   ) : (
                     <div className="h-64 w-64 flex items-center justify-center text-xs text-black/60">
                       <Loader2 className="h-5 w-5 animate-spin" />

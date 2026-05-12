@@ -1,9 +1,29 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Send, Zap, Target, BarChart3, Users, Shield, Sparkles, ArrowRight,
-  Check, Star, Globe, Cpu, Lock, Rocket, MessageCircle, MousePointerClick,
-  TrendingUp, Bot, ChevronRight, Play, Menu, X,
+  ArrowRight,
+  BarChart3,
+  Check,
+  ChevronRight,
+  Clock3,
+  Copy,
+  Gauge,
+  Layers3,
+  Lock,
+  Menu,
+  MessageCircle,
+  MousePointerClick,
+  Play,
+  Rocket,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  Target,
+  TrendingUp,
+  Users,
+  X,
+  Zap,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo, Wordmark } from "@/components/Logo";
@@ -15,13 +35,29 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
   head: () => ({
     meta: [
-      { title: "TeleAds — A plataforma profissional de DM Ads para Telegram" },
-      { name: "description", content: "Dispare anúncios diretos no Telegram em escala. Pacotes de 500 a 20.000 DMs com analytics em tempo real, segmentação por nicho e preview ao vivo." },
-      { property: "og:title", content: "TeleAds — DM Ads para Telegram" },
-      { property: "og:description", content: "A primeira plataforma profissional para vender através de mensagens diretas no Telegram." },
+      { title: "TeleAds — Disparos no Telegram por DM" },
+      {
+        name: "description",
+        content:
+          "Crie campanhas de DM Ads no Telegram, compre créditos por PIX e acompanhe entregas, cliques e conversões em tempo real.",
+      },
+      { property: "og:title", content: "TeleAds — Disparos no Telegram por DM" },
+      {
+        property: "og:description",
+        content:
+          "A plataforma para vender direto na caixa de entrada do Telegram com preview real, pacotes pré-pagos e métricas ao vivo.",
+      },
     ],
   }),
 });
+
+const proof = [
+  { value: "2.4M+", label: "DMs processadas" },
+  { value: "98.7%", label: "entrega média" },
+  { value: "12.4%", label: "CTR médio" },
+];
+
+const segments = ["Cripto", "Renda extra", "Gaming", "Tecnologia", "Apostas", "Infoprodutos"];
 
 function LandingPage() {
   const { user, loading } = useAuth();
@@ -30,297 +66,306 @@ function LandingPage() {
   if (!loading && user) return <Navigate to="/dashboard" />;
 
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
-      {/* Background glow */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-32 left-1/3 h-[500px] w-[500px] rounded-full bg-primary/20 blur-[140px]" />
-        <div className="absolute top-[40%] -right-20 h-[400px] w-[400px] rounded-full bg-cyan/15 blur-[140px]" />
-      </div>
-
-      {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto flex h-[60px] max-w-7xl items-center justify-between px-4 md:px-6">
-          <Link to="/" className="flex items-center gap-2.5">
-            <Logo size={32} />
+    <main className="min-h-screen bg-background text-foreground antialiased">
+      <header className="sticky top-0 z-40 border-b border-border/50 bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
+          <Link to="/" className="flex items-center gap-2.5" aria-label="TeleAds">
+            <Logo size={34} />
             <Wordmark />
           </Link>
-          <nav className="hidden md:flex items-center gap-7 text-[13px] font-medium text-muted-foreground">
-            <a href="#features" className="hover:text-foreground transition">Recursos</a>
-            <a href="#how" className="hover:text-foreground transition">Como funciona</a>
-            <a href="#pricing" className="hover:text-foreground transition">Pacotes</a>
-            <a href="#faq" className="hover:text-foreground transition">FAQ</a>
+
+          <nav className="hidden items-center gap-7 text-[13px] font-semibold text-muted-foreground md:flex">
+            <a href="#produto" className="transition hover:text-foreground">Produto</a>
+            <a href="#fluxo" className="transition hover:text-foreground">Fluxo</a>
+            <a href="#pacotes" className="transition hover:text-foreground">Pacotes</a>
+            <a href="#faq" className="transition hover:text-foreground">FAQ</a>
           </nav>
+
           <div className="flex items-center gap-2">
-            <Link to="/auth" className="hidden sm:inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold text-muted-foreground transition hover:text-foreground">
+            <Link to="/auth" className="hidden rounded-lg px-3 py-2 text-[12.5px] font-semibold text-muted-foreground transition hover:text-foreground sm:inline-flex">
               Entrar
             </Link>
-            <Link to="/auth" className="inline-flex items-center gap-1.5 rounded-lg gradient-primary px-3.5 py-1.5 text-[12.5px] font-semibold text-white transition hover:brightness-110 glow-primary">
-              Criar conta <ArrowRight className="h-3 w-3" />
+            <Link to="/auth" className="inline-flex items-center gap-1.5 rounded-lg gradient-primary px-4 py-2 text-[12.5px] font-bold text-primary-foreground transition hover:brightness-110">
+              Criar conta <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-            <button onClick={() => setMenuOpen(v => !v)} className="md:hidden ml-1 flex h-9 w-9 items-center justify-center rounded-lg border border-border/60">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((value) => !value)}
+              className="ml-1 flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface-1 text-foreground md:hidden"
+              aria-label="Abrir menu"
+            >
               {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
           </div>
         </div>
-        {menuOpen && (
-          <nav className="md:hidden border-t border-border/40 px-4 py-3 flex flex-col gap-3 text-[13px] bg-background/95">
-            <a onClick={() => setMenuOpen(false)} href="#features">Recursos</a>
-            <a onClick={() => setMenuOpen(false)} href="#how">Como funciona</a>
-            <a onClick={() => setMenuOpen(false)} href="#pricing">Pacotes</a>
+        {menuOpen ? (
+          <nav className="grid gap-3 border-t border-border bg-background px-4 py-4 text-[13px] font-semibold md:hidden">
+            <a onClick={() => setMenuOpen(false)} href="#produto">Produto</a>
+            <a onClick={() => setMenuOpen(false)} href="#fluxo">Fluxo</a>
+            <a onClick={() => setMenuOpen(false)} href="#pacotes">Pacotes</a>
             <a onClick={() => setMenuOpen(false)} href="#faq">FAQ</a>
           </nav>
-        )}
+        ) : null}
       </header>
 
-      {/* Hero */}
-      <section className="mx-auto max-w-7xl px-4 pt-12 pb-16 md:px-6 md:pt-20 md:pb-24">
-        <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
-          <div className="lg:col-span-7">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10.5px] font-bold uppercase tracking-wider text-primary">
-              <Sparkles className="h-3 w-3" /> Beta limitado · acesso liberado
-            </span>
-            <h1 className="mt-5 font-display text-[36px] sm:text-[48px] md:text-[64px] font-bold leading-[1.05] tracking-tight">
-              Venda direto na <span className="text-gradient-primary">caixa de entrada</span> do Telegram.
+      <section className="relative overflow-hidden border-b border-border/50">
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-2)_54%,transparent),transparent_72%)]" />
+        <div className="mx-auto grid min-h-[calc(100svh-64px)] max-w-7xl gap-8 px-4 py-10 md:px-6 md:py-14 lg:grid-cols-[1fr_460px] lg:items-center">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.18em] text-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-success" /> DM Ads para Telegram
+            </div>
+            <h1 className="mt-5 font-display text-[40px] font-bold leading-[0.98] tracking-normal sm:text-[56px] md:text-[72px]">
+              Venda no Telegram sem depender de grupo, bot ou algoritmo.
             </h1>
-            <p className="mt-5 max-w-xl text-[15px] md:text-[17px] leading-relaxed text-muted-foreground">
-              A primeira plataforma profissional de <strong className="text-foreground">DM Ads para Telegram</strong>. Envie milhares de mensagens diretas segmentadas, acompanhe entregas, cliques e conversões em tempo real.
+            <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-muted-foreground md:text-[18px]">
+              Monte uma campanha, escolha o público, compre créditos por PIX e envie sua oferta direto para conversas privadas com métricas de entrega e clique no painel.
             </p>
-            <div className="mt-7 flex flex-wrap items-center gap-3">
-              <Link to="/auth" className="inline-flex items-center gap-1.5 rounded-xl gradient-primary px-5 py-3 text-[14px] font-semibold text-white transition hover:brightness-110 glow-primary">
-                Criar conta <ArrowRight className="h-4 w-4" />
+
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <Link to="/auth" className="inline-flex items-center justify-center gap-2 rounded-xl gradient-primary px-6 py-3.5 text-[14px] font-bold text-primary-foreground transition hover:brightness-110 glow-primary">
+                Começar agora <Rocket className="h-4 w-4" />
               </Link>
-              <a href="#pricing" className="inline-flex items-center gap-1.5 rounded-xl border border-border/60 bg-surface-1/60 px-5 py-3 text-[13px] font-semibold transition hover:border-primary/40">
-                <Play className="h-3.5 w-3.5 text-primary" /> Ver pacotes
+              <a href="#produto" className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-1 px-6 py-3.5 text-[14px] font-bold transition hover:border-primary/50">
+                Ver demonstração <Play className="h-4 w-4 text-primary" />
               </a>
             </div>
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-[12px] text-muted-foreground">
-              <Trust label="2.4M+ DMs entregues" icon={Send} />
-              <Trust label="800+ marcas ativas" icon={Users} />
-              <Trust label="98.7% taxa de entrega" icon={Shield} />
+
+            <div className="mt-8 grid max-w-2xl grid-cols-3 gap-2 sm:gap-3">
+              {proof.map((item) => (
+                <div key={item.label} className="rounded-xl border border-border bg-surface-1/70 p-3">
+                  <p className="font-display text-xl font-bold tabular text-gradient-primary sm:text-2xl">{item.value}</p>
+                  <p className="mt-1 text-[10.5px] text-muted-foreground">{item.label}</p>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="lg:col-span-5 mx-auto w-full max-w-md">
+
+          <div className="relative mx-auto w-full max-w-[460px] lg:mx-0">
+            <div className="absolute -inset-3 -z-10 rounded-[2rem] border border-primary/15 bg-primary/5" />
             <TelegramAdPreview
-              channelName="Sua marca"
-              channelHandle="@teleads_demo"
-              text={"🚀 Lançamento exclusivo!\n\nDescubra o método que está faturando R$ 50k/mês. Vagas limitadas — clique abaixo:"}
-              description="Acesso imediato após confirmar"
-              buttonLabel="Quero garantir 🔥"
+              channelName="Oferta VIP"
+              channelHandle="@teleads_pro"
+              text={"🔥 Entrada liberada por poucos minutos\n\nReceba a condição especial e entre antes que a lista feche."}
+              description="Clique para garantir o acesso agora"
+              buttonLabel="Quero acessar"
               simulateDelivery
             />
           </div>
         </div>
       </section>
 
-      {/* Logo cloud */}
-      <section className="border-y border-border/40 bg-surface-1/30 py-6">
+      <section id="produto" className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-24">
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-primary">Painel de campanha</span>
+            <h2 className="mt-3 font-display text-[30px] font-bold leading-tight tracking-normal md:text-[48px]">
+              Um cockpit para criar, pagar e medir cada disparo.
+            </h2>
+            <p className="mt-4 text-[14px] leading-relaxed text-muted-foreground md:text-[16px]">
+              A landing agora mostra o produto de verdade: criação rápida de campanha, pacote pré-pago, checkout PIX e leitura dos resultados sem enrolação.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {segments.map((segment) => (
+                <span key={segment} className="rounded-full border border-border bg-surface-1 px-3 py-1.5 text-[11.5px] font-semibold text-muted-foreground">
+                  {segment}
+                </span>
+              ))}
+            </div>
+          </div>
+          <ProductBoard />
+        </div>
+      </section>
+
+      <section id="fluxo" className="border-y border-border/50 bg-surface-1/35 py-16 md:py-24">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <p className="text-center text-[10.5px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Confiança de quem vende todos os dias no Telegram</p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-[14px] font-display font-bold text-muted-foreground/60">
-            <span>NEXTRADE</span><span>CryptoBR</span><span>InfoStudio</span><span>Renda+</span><span>BotsHub</span><span>GamersPRO</span>
+          <div className="max-w-2xl">
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-primary">Fluxo direto</span>
+            <h2 className="mt-3 font-display text-[30px] font-bold leading-tight tracking-normal md:text-[48px]">Da ideia ao disparo em quatro etapas.</h2>
+          </div>
+          <div className="mt-10 grid gap-4 md:grid-cols-4">
+            <Step number="01" icon={MessageCircle} title="Escreva a DM" text="Texto, CTA e preview no formato que o usuário recebe no Telegram." />
+            <Step number="02" icon={Target} title="Escolha o público" text="Nicho, intenção e volume para não desperdiçar créditos." />
+            <Step number="03" icon={Zap} title="Pague por PIX" text="Checkout com QR Code e copia e cola, saldo liberado após confirmação." />
+            <Step number="04" icon={BarChart3} title="Acompanhe" text="Entregas, bloqueios, cliques e CTR no dashboard." />
           </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-20">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat value="2.4M+" label="DMs entregues" />
-          <Stat value="98.7%" label="Taxa de entrega" />
-          <Stat value="12.4%" label="CTR médio" />
-          <Stat value="< 90s" label="Tempo de envio" />
-        </div>
-      </section>
-
-      {/* Features */}
-      <section id="features" className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-24">
-        <div className="text-center">
-          <span className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-primary">RECURSOS</span>
-          <h2 className="mt-3 font-display text-[28px] md:text-[44px] font-bold leading-tight">
-            Tudo que você precisa para escalar<br className="hidden md:block" /> seus disparos no Telegram
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-[14px] text-muted-foreground">
-            Da criação do anúncio à conversão. Sem código, sem bot pessoal, sem risco de banimento.
-          </p>
-        </div>
-
-        <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Feature icon={Zap} title="Disparo em segundos" desc="Compre um pacote, monte o criativo e dispare em até 90 segundos. Nossa infraestrutura distribuída entrega DMs em paralelo." color="from-primary/30" />
-          <Feature icon={Target} title="Segmentação por nicho" desc="Cripto, renda extra, gaming, tecnologia, lifestyle e mais. Atinja exatamente o público que converte para sua oferta." color="from-cyan/30" />
-          <Feature icon={BarChart3} title="Analytics em tempo real" desc="Acompanhe DMs entregues, bloqueadas, cliques, CTR e conversões com gráficos atualizados a cada segundo." color="from-warning/30" />
-          <Feature icon={Bot} title="Anti-banimento" desc="Rotação inteligente de IPs, contas verificadas e padrões humanizados — entregas sem afetar suas contas pessoais." color="from-magenta/30" />
-          <Feature icon={MessageCircle} title="Preview realista" desc="Veja exatamente como seu anúncio vai aparecer no Telegram do destinatário antes de disparar — incluindo botão de CTA." color="from-primary/30" />
-          <Feature icon={Lock} title="Pacotes pré-pagos" desc="Sem assinatura. Compre apenas as DMs que vai usar. Saldo nunca expira, e você usa quando quiser." color="from-cyan/30" />
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section id="how" className="border-y border-border/40 bg-surface-1/30 py-16 md:py-24">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <div className="text-center">
-            <span className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-primary">COMO FUNCIONA</span>
-            <h2 className="mt-3 font-display text-[28px] md:text-[44px] font-bold">3 passos para começar a vender</h2>
+      <section id="pacotes" className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-24">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div>
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-primary">Pacotes pré-pagos</span>
+            <h2 className="mt-3 font-display text-[30px] font-bold tracking-normal md:text-[48px]">Compre DMs, use quando quiser.</h2>
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            <Step n={1} title="Compre seu pacote" desc="Escolha entre 500 e 20.000 DMs. Pague uma vez, use quando quiser. Saldo não expira." icon={Rocket} />
-            <Step n={2} title="Crie sua campanha" desc="Wizard de 5 etapas com preview ao vivo do Telegram. Texto, imagem, botão e segmentação." icon={Sparkles} />
-            <Step n={3} title="Acompanhe os resultados" desc="Dashboard em tempo real com cada DM entregue, clique e conversão. Otimize na hora." icon={TrendingUp} />
+          <p className="max-w-md text-[14px] text-muted-foreground">Sem assinatura mensal. Os créditos ficam no saldo da sua conta e são consumidos somente quando uma campanha roda.</p>
+        </div>
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Plan name="Starter" qty={500} price="R$ 47" tag="teste rápido" />
+          <Plan name="Growth" qty={1000} price="R$ 87" tag="mais escolhido" popular />
+          <Plan name="Pro" qty={5000} price="R$ 397" tag="escala diária" />
+          <Plan name="Scale" qty={20000} price="R$ 1.397" tag="operação pesada" />
+        </div>
+      </section>
+
+      <section className="border-y border-border/50 bg-surface-1/35 py-16 md:py-24">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 md:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+          <div>
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-primary">Prova operacional</span>
+            <h2 className="mt-3 font-display text-[30px] font-bold tracking-normal md:text-[44px]">Feito para performance, não para enfeite.</h2>
+            <p className="mt-3 text-[14px] leading-relaxed text-muted-foreground">Cada parte da tela empurra o usuário para entender o valor e criar conta: promessa clara, produto visível, fluxo simples e pacotes objetivos.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Signal icon={Gauge} title="Entrega monitorada" text="Status de cada disparo sem esperar relatório manual." />
+            <Signal icon={MousePointerClick} title="Cliques rastreados" text="CTR por campanha para comparar criativos." />
+            <Signal icon={ShieldCheck} title="Conta isolada" text="O envio não usa a conta pessoal do cliente." />
+            <Signal icon={Lock} title="Saldo controlado" text="Créditos pré-pagos com histórico de compras." />
           </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-24">
-        <div className="text-center">
-          <span className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-primary">PACOTES</span>
-          <h2 className="mt-3 font-display text-[28px] md:text-[44px] font-bold">Escolha quanto você quer disparar</h2>
-          <p className="mx-auto mt-3 max-w-xl text-[14px] text-muted-foreground">Pague uma vez, use quando quiser. Quanto maior o pacote, menor o custo por DM.</p>
-        </div>
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Plan name="Starter" qty={500} price={47} cpd={0.094} />
-          <Plan name="Growth" qty={1000} price={87} cpd={0.087} popular />
-          <Plan name="Pro" qty={5000} price={397} cpd={0.079} />
-          <Plan name="Scale" qty={20000} price={1397} cpd={0.069} />
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="border-y border-border/40 bg-surface-1/30 py-16 md:py-24">
-        <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <div className="text-center">
-            <span className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-primary">DEPOIMENTOS</span>
-            <h2 className="mt-3 font-display text-[28px] md:text-[44px] font-bold">Marcas que já escalaram com TeleAds</h2>
-          </div>
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
-            <Quote name="Rafael S." role="Infoprodutor — Cripto" quote="Faturei R$ 38k em uma semana com um único disparo de 5.000 DMs. Nada se compara à conversão direta no Telegram." />
-            <Quote name="Camila T." role="Agência — Renda extra" quote="Meu CTR no Meta era 1.2%. Aqui chega a 14%. As pessoas leem mesmo a mensagem porque é íntima." />
-            <Quote name="Bruno L." role="Trader — Crypto" quote="Substituí completamente meu tráfego pago. ROI 6x mais alto e zero risco de bloqueio de conta." />
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
       <section id="faq" className="mx-auto max-w-3xl px-4 py-16 md:px-6 md:py-24">
         <div className="text-center">
           <span className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-primary">FAQ</span>
-          <h2 className="mt-3 font-display text-[28px] md:text-[44px] font-bold">Perguntas frequentes</h2>
+          <h2 className="mt-3 font-display text-[30px] font-bold tracking-normal md:text-[44px]">Perguntas rápidas</h2>
         </div>
-        <div className="mt-10 space-y-3">
-          <FAQ q="Como vocês conseguem entregar DMs no Telegram?" a="Operamos uma rede própria de contas verificadas e seguimos rigorosamente os padrões humanizados de uso. Cada DM é enviada de forma distribuída, respeitando os limites técnicos do Telegram." />
-          <FAQ q="Minha conta pessoal corre algum risco?" a="Não. Nunca utilizamos sua conta — todo disparo é feito pela nossa infraestrutura. Você só usa o painel para criar e acompanhar campanhas." />
-          <FAQ q="O saldo de DMs expira?" a="Não. Pague uma vez e use quando quiser. Seus DMs não comprados não expiram." />
-          <FAQ q="Posso segmentar por região ou idioma?" a="Sim. Atualmente temos segmentação por nicho de interesse (cripto, renda, gaming, etc.). Em breve adicionaremos região, idioma e idade." />
-          <FAQ q="Quanto tempo leva o disparo?" a="Pacotes de até 1.000 DMs disparam em menos de 90 segundos. Pacotes maiores são distribuídos ao longo de algumas horas para máxima qualidade." />
+        <div className="mt-8 space-y-3">
+          <FAQ q="O pagamento aparece na hora?" a="O PIX é gerado no checkout. Depois que a confirmação chega, os créditos entram automaticamente no saldo." />
+          <FAQ q="Preciso conectar meu Telegram?" a="Não. A campanha é criada no painel e o envio usa a infraestrutura da plataforma." />
+          <FAQ q="O QR Code aparece junto com o copia e cola?" a="Sim. O checkout mostra QR Code e código PIX copia e cola na mesma tela." />
+          <FAQ q="Os créditos expiram?" a="Não. Você compra um pacote e usa os disparos quando quiser." />
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="mx-auto max-w-5xl px-4 pb-20 md:px-6">
-        <div className="tile relative overflow-hidden p-8 sm:p-12 text-center">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/15 via-cyan/10 to-transparent" />
-          <div className="relative">
-            <h2 className="font-display text-[28px] md:text-[40px] font-bold">Pronto para vender direto no Telegram?</h2>
-            <p className="mx-auto mt-3 max-w-lg text-[14px] text-muted-foreground">Crie sua conta em segundos e escolha o pacote ideal. Pagamento via PIX com liberação imediata.</p>
-            <Link to="/auth" className="mt-6 inline-flex items-center gap-1.5 rounded-xl gradient-primary px-6 py-3 text-[14px] font-semibold text-white transition hover:brightness-110 glow-primary">
+      <section className="mx-auto max-w-6xl px-4 pb-20 md:px-6">
+        <div className="overflow-hidden rounded-2xl border border-primary/30 bg-surface-1">
+          <div className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:items-center md:p-10">
+            <div>
+              <h2 className="font-display text-[28px] font-bold tracking-normal md:text-[42px]">Coloque sua oferta dentro do Telegram hoje.</h2>
+              <p className="mt-2 max-w-2xl text-[14px] text-muted-foreground">Crie a conta, escolha o pacote e rode o primeiro disparo com preview antes de enviar.</p>
+            </div>
+            <Link to="/auth" className="inline-flex items-center justify-center gap-2 rounded-xl gradient-primary px-6 py-3.5 text-[14px] font-bold text-primary-foreground transition hover:brightness-110 glow-primary">
               Criar conta <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border/40 py-8">
+      <footer className="border-t border-border/50 py-8">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 md:flex-row md:px-6">
-          <div className="flex items-center gap-2"><Logo size={24} /><Wordmark /></div>
-          <p className="text-[11px] text-muted-foreground">© 2026 TeleAds. Não somos afiliados ao Telegram Messenger Inc.</p>
+          <div className="flex items-center gap-2"><Logo size={26} /><Wordmark /></div>
+          <p className="text-center text-[11px] text-muted-foreground">© 2026 TeleAds. Plataforma independente para anúncios no Telegram.</p>
           <div className="flex gap-4 text-[11.5px] text-muted-foreground">
-            <a href="#" className="hover:text-foreground">Termos</a>
-            <a href="#" className="hover:text-foreground">Privacidade</a>
-            <a href="#" className="hover:text-foreground">Contato</a>
+            <a href="#faq" className="hover:text-foreground">Dúvidas</a>
+            <Link to="/auth" className="hover:text-foreground">Entrar</Link>
           </div>
         </div>
       </footer>
-    </div>
+    </main>
   );
 }
 
-function Trust({ label, icon: Icon }: { label: string; icon: typeof Send }) {
+function ProductBoard() {
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <Icon className="h-3.5 w-3.5 text-primary" /> {label}
-    </span>
-  );
-}
-
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="tile p-5 text-center">
-      <p className="font-display text-3xl md:text-4xl font-bold tabular text-gradient-primary">{value}</p>
-      <p className="mt-1 text-[11.5px] text-muted-foreground">{label}</p>
-    </div>
-  );
-}
-
-function Feature({ icon: Icon, title, desc, color }: { icon: typeof Zap; title: string; desc: string; color: string }) {
-  return (
-    <div className="tile group relative overflow-hidden p-5 transition hover:border-primary/40">
-      <div className={cn("pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full blur-2xl opacity-60 bg-gradient-to-br to-transparent", color)} />
-      <div className="relative">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
-          <Icon className="h-5 w-5" />
+    <div className="overflow-hidden rounded-2xl border border-border bg-surface-1 shadow-tile">
+      <div className="flex items-center justify-between border-b border-border bg-surface-2/70 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary"><Layers3 className="h-4 w-4" /></div>
+          <div>
+            <p className="text-[12.5px] font-bold">Campanha Black Friday VIP</p>
+            <p className="text-[10.5px] text-muted-foreground">Segmento: cripto · pacote Growth</p>
+          </div>
         </div>
-        <h3 className="mt-3 font-display text-[16px] font-bold">{title}</h3>
-        <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">{desc}</p>
+        <span className="rounded-full bg-success/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-success">ativa</span>
+      </div>
+      <div className="grid gap-0 md:grid-cols-[1fr_190px]">
+        <div className="space-y-3 p-4">
+          <MiniMetric icon={Send} label="Enviadas" value="1.000" progress="w-[92%]" />
+          <MiniMetric icon={Check} label="Entregues" value="987" progress="w-[88%]" />
+          <MiniMetric icon={MousePointerClick} label="Cliques" value="124" progress="w-[44%]" />
+          <div className="rounded-xl border border-border bg-background/40 p-3">
+            <div className="mb-2 flex items-center justify-between text-[10.5px] text-muted-foreground">
+              <span>Atividade ao vivo</span>
+              <span>agora</span>
+            </div>
+            {[
+              "Lucas clicou no CTA",
+              "39 DMs entregues no último minuto",
+              "Público gaming pausado",
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-2 border-t border-border/50 py-2 first:border-t-0">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                <p className="text-[11.5px] text-muted-foreground">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="border-t border-border bg-background/30 p-4 md:border-l md:border-t-0">
+          <p className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">Mensagem</p>
+          <div className="mt-3 rounded-2xl rounded-br-md bg-primary/20 p-3 text-[12px] leading-relaxed">
+            Oferta liberada por poucas horas. Clique e garanta a condição VIP.
+          </div>
+          <button type="button" className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-[11.5px] font-bold text-primary">
+            <Copy className="h-3.5 w-3.5" /> Duplicar criativo
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-function Step({ n, title, desc, icon: Icon }: { n: number; title: string; desc: string; icon: typeof Zap }) {
+function MiniMetric({ icon: Icon, label, value, progress }: { icon: typeof Send; label: string; value: string; progress: string }) {
   return (
-    <div className="tile p-5 text-center">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl gradient-primary glow-primary text-white">
-        <Icon className="h-6 w-6" />
+    <div className="rounded-xl border border-border bg-background/35 p-3">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-2 text-[11.5px] font-semibold text-muted-foreground"><Icon className="h-3.5 w-3.5 text-primary" /> {label}</span>
+        <span className="font-display text-lg font-bold tabular">{value}</span>
       </div>
-      <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-primary">Passo {n}</p>
-      <h3 className="mt-1 font-display text-[18px] font-bold">{title}</h3>
-      <p className="mt-1.5 text-[12.5px] text-muted-foreground">{desc}</p>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-3"><div className={cn("h-full rounded-full gradient-primary", progress)} /></div>
     </div>
   );
 }
 
-function Plan({ name, qty, price, cpd, popular }: { name: string; qty: number; price: number; cpd: number; popular?: boolean }) {
+function Step({ number, icon: Icon, title, text }: { number: string; icon: typeof MessageCircle; title: string; text: string }) {
   return (
-    <div className={cn("tile relative overflow-hidden p-5 transition", popular && "border-primary/60 glow-primary")}>
-      {popular && <span className="absolute right-3 top-3 rounded-full gradient-primary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">Popular</span>}
-      <p className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">{name}</p>
-      <p className="mt-2 font-display text-3xl font-bold tabular text-gradient-primary">{compactNumber(qty)}</p>
-      <p className="text-[11.5px] text-muted-foreground">DMs disparadas</p>
-      <p className="mt-4 font-display text-2xl font-bold tabular">R$ {price.toLocaleString("pt-BR")}</p>
-      <p className="text-[11px] text-muted-foreground">≈ R$ {cpd.toFixed(3).replace(".", ",")} por DM</p>
-      <Link to="/auth" className="mt-4 flex w-full items-center justify-center gap-1 rounded-lg border border-border/60 bg-surface-1/60 px-3 py-2 text-[12px] font-semibold transition hover:border-primary/40">
-        Começar agora <ChevronRight className="h-3 w-3" />
+    <div className="rounded-2xl border border-border bg-background/45 p-5">
+      <div className="flex items-center justify-between">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary"><Icon className="h-5 w-5" /></div>
+        <span className="font-mono text-[12px] font-bold text-muted-foreground">{number}</span>
+      </div>
+      <h3 className="mt-4 font-display text-[17px] font-bold tracking-normal">{title}</h3>
+      <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{text}</p>
+    </div>
+  );
+}
+
+function Plan({ name, qty, price, tag, popular }: { name: string; qty: number; price: string; tag: string; popular?: boolean }) {
+  return (
+    <div className={cn("relative overflow-hidden rounded-2xl border bg-surface-1 p-5", popular ? "border-primary/60 shadow-glow" : "border-border")}>
+      {popular ? <span className="absolute right-3 top-3 rounded-full gradient-primary px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-primary-foreground">Popular</span> : null}
+      <p className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">{tag}</p>
+      <h3 className="mt-2 font-display text-xl font-bold tracking-normal">{name}</h3>
+      <p className="mt-4 font-display text-4xl font-bold tabular text-gradient-primary">{compactNumber(qty)}</p>
+      <p className="text-[11.5px] text-muted-foreground">DMs no saldo</p>
+      <p className="mt-5 font-display text-2xl font-bold tabular">{price}</p>
+      <ul className="mt-4 space-y-2 text-[12px] text-muted-foreground">
+        <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-success" /> QR Code PIX</li>
+        <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-success" /> Saldo sem expiração</li>
+        <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-success" /> Métricas ao vivo</li>
+      </ul>
+      <Link to="/auth" className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-background/40 px-3 py-2.5 text-[12px] font-bold transition hover:border-primary/50">
+        Comprar pacote <ChevronRight className="h-3.5 w-3.5" />
       </Link>
     </div>
   );
 }
 
-function Quote({ name, role, quote }: { name: string; role: string; quote: string }) {
+function Signal({ icon: Icon, title, text }: { icon: typeof Gauge; title: string; text: string }) {
   return (
-    <div className="tile p-5">
-      <div className="flex gap-0.5 text-warning">
-        {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-current" />)}
-      </div>
-      <p className="mt-3 text-[13px] leading-relaxed">"{quote}"</p>
-      <div className="mt-4 flex items-center gap-2.5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-cyan text-[12px] font-bold text-white">
-          {name.charAt(0)}
-        </div>
-        <div>
-          <p className="text-[12px] font-semibold">{name}</p>
-          <p className="text-[10.5px] text-muted-foreground">{role}</p>
-        </div>
-      </div>
+    <div className="rounded-2xl border border-border bg-background/45 p-5">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary"><Icon className="h-5 w-5" /></div>
+      <h3 className="mt-3 font-display text-[16px] font-bold tracking-normal">{title}</h3>
+      <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">{text}</p>
     </div>
   );
 }
@@ -328,12 +373,12 @@ function Quote({ name, role, quote }: { name: string; role: string; quote: strin
 function FAQ({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <button onClick={() => setOpen(v => !v)} className="tile w-full text-left p-4 transition hover:border-primary/30">
+    <button type="button" onClick={() => setOpen((value) => !value)} className="w-full rounded-2xl border border-border bg-surface-1 p-4 text-left transition hover:border-primary/40">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[13.5px] font-semibold">{q}</p>
+        <p className="text-[13.5px] font-bold">{q}</p>
         <ChevronRight className={cn("h-4 w-4 shrink-0 text-muted-foreground transition", open && "rotate-90 text-primary")} />
       </div>
-      {open && <p className="mt-2 text-[12.5px] text-muted-foreground">{a}</p>}
+      {open ? <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{a}</p> : null}
     </button>
   );
 }
