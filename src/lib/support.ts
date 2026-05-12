@@ -1,6 +1,5 @@
 // Configuração centralizada dos canais de suporte.
-// Substitua a URL do WhatsApp pelo link real do grupo quando disponível.
 export const SUPPORT = {
-  whatsappGroupUrl: "https://chat.whatsapp.com/SEU-LINK-AQUI",
+  whatsappGroupUrl: "https://chat.whatsapp.com/Gtv4TEOofm258ZtldohNUC",
   whatsappLabel: "Comunidade no WhatsApp",
 };
