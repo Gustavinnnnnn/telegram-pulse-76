@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Users, ShoppingBag, Send, DollarSign, TrendingUp, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/_admin/")({
+export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
 });
 

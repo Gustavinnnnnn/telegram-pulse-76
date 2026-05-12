@@ -6,7 +6,7 @@ import { Plus, Minus, Ban, CheckCircle2, Search, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_admin/members")({
+export const Route = createFileRoute("/admin/members")({
   component: AdminMembers,
 });
 
