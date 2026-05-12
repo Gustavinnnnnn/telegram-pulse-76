@@ -16,6 +16,7 @@ import { Route as AppStoreRouteImport } from './routes/_app.store'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCampaignsIndexRouteImport } from './routes/_app.campaigns.index'
+import { Route as ApiPublicParadiseStatusRouteImport } from './routes/api/public/paradise-status'
 import { Route as ApiPublicParadiseCreateRouteImport } from './routes/api/public/paradise-create'
 import { Route as AppCampaignsNewRouteImport } from './routes/_app.campaigns.new'
 import { Route as AppCampaignsIdRouteImport } from './routes/_app.campaigns.$id'
@@ -54,6 +55,11 @@ const AppCampaignsIndexRoute = AppCampaignsIndexRouteImport.update({
   path: '/campaigns/',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicParadiseStatusRoute = ApiPublicParadiseStatusRouteImport.update({
+  id: '/api/public/paradise-status',
+  path: '/api/public/paradise-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicParadiseCreateRoute = ApiPublicParadiseCreateRouteImport.update({
   id: '/api/public/paradise-create',
   path: '/api/public/paradise-create',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/campaigns/new': typeof AppCampaignsNewRoute
   '/api/public/paradise-create': typeof ApiPublicParadiseCreateRoute
+  '/api/public/paradise-status': typeof ApiPublicParadiseStatusRoute
   '/campaigns/': typeof AppCampaignsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/campaigns/$id': typeof AppCampaignsIdRoute
   '/campaigns/new': typeof AppCampaignsNewRoute
   '/api/public/paradise-create': typeof ApiPublicParadiseCreateRoute
+  '/api/public/paradise-status': typeof ApiPublicParadiseStatusRoute
   '/campaigns': typeof AppCampaignsIndexRoute
 }
 export interface FileRoutesById {
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/_app/campaigns/$id': typeof AppCampaignsIdRoute
   '/_app/campaigns/new': typeof AppCampaignsNewRoute
   '/api/public/paradise-create': typeof ApiPublicParadiseCreateRoute
+  '/api/public/paradise-status': typeof ApiPublicParadiseStatusRoute
   '/_app/campaigns/': typeof AppCampaignsIndexRoute
 }
 export interface FileRouteTypes {
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/campaigns/$id'
     | '/campaigns/new'
     | '/api/public/paradise-create'
+    | '/api/public/paradise-status'
     | '/campaigns/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/campaigns/$id'
     | '/campaigns/new'
     | '/api/public/paradise-create'
+    | '/api/public/paradise-status'
     | '/campaigns'
   id:
     | '__root__'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/_app/campaigns/$id'
     | '/_app/campaigns/new'
     | '/api/public/paradise-create'
+    | '/api/public/paradise-status'
     | '/_app/campaigns/'
   fileRoutesById: FileRoutesById
 }
@@ -147,6 +159,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicParadiseCreateRoute: typeof ApiPublicParadiseCreateRoute
+  ApiPublicParadiseStatusRoute: typeof ApiPublicParadiseStatusRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -200,6 +213,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCampaignsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/paradise-status': {
+      id: '/api/public/paradise-status'
+      path: '/api/public/paradise-status'
+      fullPath: '/api/public/paradise-status'
+      preLoaderRoute: typeof ApiPublicParadiseStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/paradise-create': {
       id: '/api/public/paradise-create'
       path: '/api/public/paradise-create'
@@ -249,6 +269,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiPublicParadiseCreateRoute: ApiPublicParadiseCreateRoute,
+  ApiPublicParadiseStatusRoute: ApiPublicParadiseStatusRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
