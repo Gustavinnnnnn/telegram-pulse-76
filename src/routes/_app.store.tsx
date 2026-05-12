@@ -152,11 +152,34 @@ function StorePage() {
 
   const copyPix = async () => {
     if (!pix) return;
+    const text = pix.qr_code;
     try {
-      await navigator.clipboard.writeText(pix.qr_code);
-      toast.success("Código PIX copiado");
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        toast.success("Código PIX copiado");
+        return;
+      }
+      throw new Error("clipboard unavailable");
     } catch {
-      toast.error("Não foi possível copiar");
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.top = "0";
+        ta.style.left = "0";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ta.setSelectionRange(0, text.length);
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        if (ok) toast.success("Código PIX copiado");
+        else toast.error("Selecione e copie manualmente");
+      } catch {
+        toast.error("Não foi possível copiar");
+      }
     }
   };
 
