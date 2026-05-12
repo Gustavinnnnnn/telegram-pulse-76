@@ -1,11 +1,10 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ArrowRight,
   BarChart3,
   Check,
   ChevronRight,
-  Clock3,
   Copy,
   Gauge,
   Layers3,
@@ -17,11 +16,6 @@ import {
   Rocket,
   Send,
   ShieldCheck,
-  Sparkles,
-  Star,
-  Target,
-  TrendingUp,
-  Users,
   X,
   Zap,
 } from "lucide-react";
