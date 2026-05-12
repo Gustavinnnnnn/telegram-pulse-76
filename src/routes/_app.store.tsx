@@ -333,8 +333,8 @@ function StorePage() {
 
       {/* Checkout modal */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-md p-0 sm:p-4 overflow-y-auto">
-          <div className="w-full min-h-screen sm:min-h-0 sm:h-auto sm:max-w-xl sm:max-h-[94vh] overflow-y-auto sm:rounded-3xl border-0 sm:border sm:border-border/60 bg-surface-1 p-5 sm:p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
+          <div className="my-auto w-full sm:max-w-xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-2xl sm:rounded-3xl border border-border/60 bg-surface-1 p-5 sm:p-6 shadow-2xl">
             <div className="flex items-start justify-between">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-primary">{pix ? "Pagamento PIX" : "Checkout"}</p>
