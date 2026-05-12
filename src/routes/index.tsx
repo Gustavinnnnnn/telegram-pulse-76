@@ -23,6 +23,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo, Wordmark } from "@/components/Logo";
 import { TelegramAdPreview } from "@/components/TelegramAdPreview";
+import { WhatsAppButton, WhatsAppFab } from "@/components/WhatsAppButton";
 import { compactNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -77,6 +78,7 @@ function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-2">
+            <WhatsAppButton variant="pill" size="sm" label="Comunidade" className="hidden sm:inline-flex" />
             <Link to="/auth" className="hidden rounded-lg px-3 py-2 text-[12.5px] font-semibold text-muted-foreground transition hover:text-foreground sm:inline-flex">
               Entrar
             </Link>
@@ -126,9 +128,10 @@ function LandingPage() {
               <Link to="/auth" className="inline-flex items-center justify-center gap-2 rounded-xl gradient-primary px-6 py-3.5 text-[14px] font-bold text-primary-foreground transition hover:brightness-110 glow-primary">
                 Criar conta grátis <Rocket className="h-4 w-4" />
               </Link>
-              <a href="#produto" className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-1 px-6 py-3.5 text-[14px] font-bold transition hover:border-primary/50">
+            <a href="#produto" className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-1 px-6 py-3.5 text-[14px] font-bold transition hover:border-primary/50">
                 Ver demonstração <Play className="h-4 w-4 text-primary" />
               </a>
+              <WhatsAppButton size="lg" label="Entrar na comunidade" />
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11.5px] text-muted-foreground">
