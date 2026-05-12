@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useProfile, useCampaigns } from "@/lib/queries";
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo, Wordmark } from "./Logo";
+import { WhatsAppFab } from "./WhatsAppButton";
 import { shortId } from "@/lib/format";
 
 const mainNav = [
@@ -197,6 +198,8 @@ export function AppLayout() {
           })}
         </ul>
       </nav>
+
+      <WhatsAppFab />
     </div>
   );
 }

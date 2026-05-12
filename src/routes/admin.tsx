@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 export const Route = createFileRoute("/admin")({
   component: AdminRoot,
@@ -89,6 +90,7 @@ function AdminRoot() {
           })}
         </nav>
         <div className="absolute inset-x-0 bottom-0 space-y-2 border-t border-border p-3">
+          <WhatsAppButton variant="outline" size="sm" label="Suporte" className="w-full" />
           <Link to="/dashboard" className="flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-3.5 w-3.5" /> Ir para o app
           </Link>
