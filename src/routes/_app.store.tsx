@@ -1,9 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Package, Zap, ShieldCheck, Sparkles, Receipt, Check, Clock, Info, X, Loader2, User, Mail } from "lucide-react";
+import { Package, Zap, ShieldCheck, Sparkles, Receipt, Check, Clock, Info, X, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useProfile, usePackages, usePurchases, type DMPackage } from "@/lib/queries";
-import { supabase } from "@/integrations/supabase/client";
+import { useProfile, usePackages, usePurchases, usePurchasePackage, type DMPackage } from "@/lib/queries";
 import { compactNumber, currency, dms } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -18,46 +17,26 @@ const TIER_THEMES = [
   { gradient: "from-warning/35 via-warning/10 to-transparent", glow: "shadow-[0_20px_60px_-30px_oklch(0.78_0.17_60_/_0.6)]", accent: "text-warning", border: "border-warning/40", chip: "bg-warning/15 text-warning" },
 ];
 
-// (CPF/phone masking removed — only name + email asked at checkout)
-
 function StorePage() {
   const { data: profile } = useProfile();
   const { data: packages = [], isLoading } = usePackages();
   const { data: purchases = [] } = usePurchases();
-  const navigate = useNavigate();
+  const purchase = usePurchasePackage();
   const [selected, setSelected] = useState<DMPackage | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "" });
 
   const balance = profile?.dm_balance ?? 0;
   const totalBought = useMemo(() => purchases.reduce((a, p) => a + p.quantity, 0), [purchases]);
   const totalSpent = useMemo(() => purchases.reduce((a, p) => a + Number(p.price_brl), 0), [purchases]);
 
-  const submit = async () => {
+  const confirm = async () => {
     if (!selected) return;
-    if (!form.name.trim() || form.name.trim().length < 2) return toast.error("Informe seu nome");
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) return toast.error("E-mail inválido");
-    setBusy(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Faça login novamente para gerar o PIX");
-
-      const response = await fetch("/api/public/paradise-checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ package_id: selected.id, name: form.name.trim(), email: form.email.trim() }),
-      });
-      const res = await response.json().catch(() => null) as { intent_id?: string; error?: string } | null;
-      if (!response.ok) throw new Error(res?.error || "Erro ao gerar PIX na Paradise");
-      if (!res?.intent_id) throw new Error("A Paradise não retornou um pagamento válido");
-
-      navigate({ to: "/checkout/$intentId", params: { intentId: res.intent_id } });
+      const res = await purchase.mutateAsync(selected.id);
+      toast.success(`+${dms(res.quantity)} creditadas no seu saldo`);
+      setSelected(null);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao gerar PIX");
-    } finally { setBusy(false); }
+      toast.error(e instanceof Error ? e.message : "Erro ao processar compra");
+    }
   };
 
   return (
@@ -68,7 +47,18 @@ function StorePage() {
           <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Loja de DMs</span>
         </div>
         <h1 className="mt-1 font-display text-[22px] font-bold tracking-tight sm:text-[28px] md:text-[32px]">Compre pacotes de disparos</h1>
-        <p className="text-[12.5px] text-muted-foreground">Pagamento via PIX. Saldo creditado automaticamente após confirmação.</p>
+        <p className="text-[12.5px] text-muted-foreground">Saldo creditado automaticamente após a confirmação.</p>
+      </div>
+
+      {/* Aviso: pagamento ainda não conectado */}
+      <div className="tile flex items-start gap-3 border-warning/30 bg-warning/5 p-4">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warning/15 text-warning">
+          <AlertCircle className="h-4 w-4" />
+        </div>
+        <div className="text-[12px] leading-relaxed">
+          <p className="font-semibold">Gateway de pagamento não configurado</p>
+          <p className="text-muted-foreground">Por enquanto as compras são creditadas imediatamente em modo de demonstração. Conecte uma plataforma de pagamento para gerar PIX real.</p>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -96,7 +86,7 @@ function StorePage() {
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-display text-base font-bold">Pacotes disponíveis</h2>
           <span className="hidden sm:inline-flex items-center gap-1 text-[10.5px] text-muted-foreground">
-            <ShieldCheck className="h-3 w-3" /> liberação imediata após pagamento
+            <ShieldCheck className="h-3 w-3" /> liberação imediata
           </span>
         </div>
 
@@ -142,7 +132,7 @@ function StorePage() {
                     </ul>
 
                     <button
-                      onClick={() => { setSelected(pkg); setForm({ name: profile?.display_name || "", email: "" }); }}
+                      onClick={() => setSelected(pkg)}
                       className={cn(
                         "mt-4 w-full rounded-xl px-4 py-2.5 text-[12.5px] font-semibold transition-all",
                         pkg.featured
@@ -166,9 +156,7 @@ function StorePage() {
         </div>
         <div className="text-[12px] leading-relaxed">
           <p className="font-semibold">Como funciona?</p>
-          <p className="text-muted-foreground">
-            Selecione um pacote, preencha seu nome e e-mail e pague via PIX. O QR code aparece direto no checkout. Assim que o pagamento for confirmado, suas DMs entram automaticamente no saldo.
-          </p>
+          <p className="text-muted-foreground">Selecione um pacote e confirme. Suas DMs entram automaticamente no saldo e ficam disponíveis para usar em qualquer campanha.</p>
         </div>
       </div>
 
@@ -210,15 +198,15 @@ function StorePage() {
         )}
       </div>
 
-      {/* Customer info modal */}
+      {/* Confirm modal */}
       {selected && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4 animate-[fade-in_0.2s_ease-out]">
           <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border/60 bg-surface-1 p-5 sm:p-6 shadow-2xl animate-[slide-up_0.25s_ease-out]">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Checkout · Etapa 1 de 2</p>
-                <h3 className="mt-0.5 font-display text-lg font-bold">Seus dados</h3>
-                <p className="text-[12px] text-muted-foreground">Em seguida você recebe o QR Code PIX.</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Confirmar compra</p>
+                <h3 className="mt-0.5 font-display text-lg font-bold">Adicionar ao saldo</h3>
+                <p className="text-[12px] text-muted-foreground">As DMs ficam disponíveis imediatamente.</p>
               </div>
               <button onClick={() => setSelected(null)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-2 hover:text-foreground">
                 <X className="h-4 w-4" />
@@ -229,26 +217,20 @@ function StorePage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg gradient-primary text-white"><Package className="h-5 w-5" /></div>
               <div className="flex-1 min-w-0">
                 <p className="text-[12.5px] font-semibold truncate">{selected.name} · {compactNumber(selected.quantity)} DMs</p>
-                <p className="text-[10.5px] text-muted-foreground">PIX à vista</p>
+                <p className="text-[10.5px] text-muted-foreground">Modo demonstração</p>
               </div>
               <p className="font-display text-lg font-bold tabular shrink-0">{currency(Number(selected.price_brl))}</p>
             </div>
 
-            <div className="mt-4 space-y-2.5">
-              <Input icon={User} placeholder="Nome completo" value={form.name} onChange={(v) => setForm(f => ({ ...f, name: v }))} />
-              <Input icon={Mail} placeholder="E-mail" type="email" value={form.email} onChange={(v) => setForm(f => ({ ...f, email: v }))} />
-              <p className="text-[10.5px] text-muted-foreground leading-relaxed">Sem necessidade de CPF. Você só precisa do nome e e-mail para receber a confirmação.</p>
-            </div>
-
             <button
-              onClick={submit}
-              disabled={busy}
+              onClick={confirm}
+              disabled={purchase.isPending}
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl gradient-primary px-4 py-3 text-[13px] font-semibold text-white transition hover:brightness-110 glow-primary disabled:opacity-50"
             >
-              {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> Gerando PIX…</> : <>Gerar QR Code PIX <Zap className="h-4 w-4" /></>}
+              {purchase.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Processando…</> : <>Confirmar e creditar <Zap className="h-4 w-4" /></>}
             </button>
             <p className="mt-2 text-center text-[10.5px] text-muted-foreground">
-              <ShieldCheck className="inline h-3 w-3 mr-1" /> Pagamento processado por Paradise Pay
+              <ShieldCheck className="inline h-3 w-3 mr-1" /> Gateway de pagamento será conectado em breve
             </p>
           </div>
         </div>
@@ -262,23 +244,5 @@ function Feat({ children }: { children: React.ReactNode }) {
     <li className="flex items-center gap-1.5 text-muted-foreground">
       <Check className="h-3 w-3 shrink-0 text-success" /> {children}
     </li>
-  );
-}
-
-function Input({ icon: Icon, placeholder, value, onChange, type = "text", inputMode }: {
-  icon: typeof User; placeholder: string; value: string; onChange: (v: string) => void; type?: string; inputMode?: "numeric" | "tel" | "email" | "text";
-}) {
-  return (
-    <div className="relative">
-      <Icon className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-      <input
-        type={type}
-        inputMode={inputMode}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full rounded-xl border border-border/60 bg-surface-2/60 py-2.5 pl-9 pr-3 text-[13px] outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
-      />
-    </div>
   );
 }
