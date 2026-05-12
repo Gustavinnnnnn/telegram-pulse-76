@@ -20,31 +20,35 @@ const ADMIN_NAV = [
 
 function AdminRoot() {
   const { user, loading, signOut } = useAuth();
-  const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (loading) return;
-    if (!user) { navigate({ to: "/auth" }); return; }
+    if (!user) { setIsAdmin(false); return; }
     supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }).then(({ data }) => {
       setIsAdmin(Boolean(data));
     });
-  }, [user, loading, navigate]);
+  }, [user, loading]);
 
   useEffect(() => { setOpen(false); }, [pathname]);
 
   if (loading || isAdmin === null) {
     return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Verificando acesso…</div>;
   }
+  if (!user) {
+    return <AdminLogin />;
+  }
   if (!isAdmin) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
         <Shield className="h-10 w-10 text-destructive" />
         <h1 className="text-xl font-bold">Acesso negado</h1>
-        <p className="text-sm text-muted-foreground">Esta área é restrita ao administrador da plataforma.</p>
-        <Link to="/dashboard" className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Voltar</Link>
+        <p className="text-sm text-muted-foreground">Esta conta não tem permissão de administrador.</p>
+        <button onClick={() => signOut()} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+          Entrar com outra conta
+        </button>
       </div>
     );
   }
