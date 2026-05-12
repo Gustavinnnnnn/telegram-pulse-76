@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useCreateCampaign, useProfile, nicheLabels } from "@/lib/queries";
+import { useCreateCampaign, useProfile, nicheLabels, genderLabels } from "@/lib/queries";
 import { TelegramAdPreview } from "@/components/TelegramAdPreview";
 import { StepperVertical } from "@/components/StepperVertical";
 import { compactNumber } from "@/lib/format";
@@ -15,6 +15,8 @@ import type { Database } from "@/integrations/supabase/types";
 
 type Objective = Database["public"]["Enums"]["campaign_objective"];
 type Niche = Database["public"]["Enums"]["campaign_niche"];
+type Gender = Database["public"]["Enums"]["campaign_gender"];
+const AGES = Array.from({ length: 48 }, (_, i) => i + 18); // 18..65
 
 export const Route = createFileRoute("/_app/campaigns/new")({
   component: NewCampaignPage,
@@ -49,7 +51,10 @@ function NewCampaignPage() {
   const [description, setDescription] = useState("");
   const [buttonLabel, setButtonLabel] = useState("Saiba mais");
   const [buttonUrl, setButtonUrl] = useState("");
-  const [niche, setNiche] = useState<Niche>("income");
+  const [niche, setNiche] = useState<Niche>("apostas");
+  const [gender, setGender] = useState<Gender>("all");
+  const [ageMin, setAgeMin] = useState(18);
+  const [ageMax, setAgeMax] = useState(45);
   const [dmTotal, setDmTotal] = useState(Math.min(250, Math.max(100, balance)));
   const [mediaUrl, setMediaUrl] = useState<string>("");
   const [uploading, setUploading] = useState(false);
@@ -102,6 +107,7 @@ function NewCampaignPage() {
         button_label: buttonLabel, button_url: buttonUrl,
         dm_total: dmTotal, media_url: mediaUrl || null,
         status: "active",
+        gender, age_min: ageMin, age_max: ageMax,
       });
       toast.success("Campanha publicada!", { description: `"${name}" entrou na fila de disparo.` });
       navigate({ to: "/campaigns" });
