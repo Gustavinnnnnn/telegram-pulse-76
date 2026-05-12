@@ -168,8 +168,8 @@ function CheckoutPage() {
                   <QrCode className="h-3 w-3" /> Aponte a câmera ou copie o código
                 </div>
                 <div className="flex justify-center rounded-2xl border border-border/40 bg-white p-4">
-                  {intent.qr_code_base64 ? (
-                    <img src={intent.qr_code_base64} alt="QR Code PIX" className="h-56 w-56" />
+                  {qrDataUrl || intent.qr_code_base64 ? (
+                    <img src={qrDataUrl || intent.qr_code_base64!} alt="QR Code PIX" className="h-56 w-56" />
                   ) : (
                     <div className="flex h-56 w-56 items-center justify-center text-muted-foreground">
                       <Loader2 className="h-6 w-6 animate-spin" />
