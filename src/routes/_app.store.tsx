@@ -218,7 +218,7 @@ function StorePage() {
                 >
                   <div className={cn("pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-gradient-to-br blur-3xl opacity-70 group-hover:opacity-100 transition-opacity", theme.gradient)} />
                   {pkg.featured && (
-                    <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-white">
+                    <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-primary-foreground">
                       <Sparkles className="h-2.5 w-2.5" /> popular
                     </span>
                   )}
@@ -246,7 +246,7 @@ function StorePage() {
                       className={cn(
                         "mt-4 w-full rounded-xl px-4 py-2.5 text-[12.5px] font-semibold transition-all",
                         pkg.featured
-                          ? "gradient-primary text-white glow-primary hover:brightness-110"
+                          ? "gradient-primary text-primary-foreground glow-primary hover:brightness-110"
                           : cn("border bg-surface-1/60 hover:bg-surface-2", theme.border, theme.accent),
                       )}
                     >
@@ -333,7 +333,7 @@ function StorePage() {
                 <button
                   onClick={generatePix}
                   disabled={creating}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl gradient-primary px-4 py-3 text-[13px] font-semibold text-white transition hover:brightness-110 glow-primary disabled:opacity-50"
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl gradient-primary px-4 py-3 text-[13px] font-semibold text-primary-foreground transition hover:brightness-110 glow-primary disabled:opacity-50"
                 >
                   {creating ? <><Loader2 className="h-4 w-4 animate-spin" /> Gerando PIX…</> : <><QrCode className="h-4 w-4" /> Gerar PIX</>}
                 </button>
@@ -348,17 +348,17 @@ function StorePage() {
                 </div>
                 <h4 className="font-display text-lg font-bold">Pagamento confirmado!</h4>
                 <p className="text-[12.5px] text-muted-foreground">{dms(selected.quantity)} foram creditadas no seu saldo.</p>
-                <button onClick={closeModal} className="mt-3 w-full rounded-xl gradient-primary px-4 py-3 text-[13px] font-semibold text-white">
+                <button onClick={closeModal} className="mt-3 w-full rounded-xl gradient-primary px-4 py-3 text-[13px] font-semibold text-primary-foreground">
                   Fechar
                 </button>
               </div>
             ) : (
               <div className="mt-4 space-y-4">
-                <div className="rounded-2xl border border-border/40 bg-white p-3 flex items-center justify-center">
+                <div className="rounded-2xl border border-border/40 bg-primary-foreground p-3 flex items-center justify-center">
                   {visibleQrSrc ? (
                     <img src={visibleQrSrc} alt="QR Code PIX" className="h-64 w-64 object-contain" />
                   ) : (
-                    <div className="h-64 w-64 flex items-center justify-center text-xs text-black/60">
+                    <div className="h-64 w-64 flex items-center justify-center text-xs text-background/60">
                       <Loader2 className="h-5 w-5 animate-spin" />
                     </div>
                   )}
