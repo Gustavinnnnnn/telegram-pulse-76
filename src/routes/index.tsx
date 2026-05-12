@@ -15,6 +15,7 @@ import {
   Play,
   Rocket,
   Send,
+  Target,
   ShieldCheck,
   X,
   Zap,
