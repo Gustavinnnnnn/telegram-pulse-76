@@ -52,7 +52,7 @@ export const Route = createFileRoute("/api/public/paradise-status")({
           if (remoteStatus === "approved") {
             const { error: rpcErr } = await supabaseAdmin.rpc("confirm_payment_intent", {
               _reference: reference,
-              _gateway_tx: tx?.id ? String(tx.id) : null,
+              _gateway_tx: tx?.id ? String(tx.id) : "",
             });
             if (rpcErr) console.error("[paradise-status] confirm rpc error", rpcErr);
             return Response.json({ status: "approved", intent_id: intent.id });
