@@ -115,3 +115,59 @@ function AdminRoot() {
   );
 }
 
+function AdminLogin() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: data.user.id, _role: "admin" });
+      if (!isAdmin) {
+        await supabase.auth.signOut();
+        throw new Error("Esta conta não é administradora.");
+      }
+      toast.success("Bem-vindo, admin!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha no login");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const inputCls = "w-full rounded-xl border border-border bg-input/60 px-3 py-2.5 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/30";
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md">
+        <div className="mb-6 flex flex-col items-center gap-3 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+            <Lock className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Painel Administrativo</h1>
+            <p className="text-xs text-muted-foreground">Acesso restrito à equipe da plataforma</p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-xl">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mail do admin" className={inputCls} />
+            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Senha" className={inputCls} />
+            <button type="submit" disabled={busy} className="w-full rounded-xl gradient-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-50">
+              {busy ? "Entrando..." : "Entrar no painel"}
+            </button>
+          </form>
+          <p className="mt-4 text-center text-[11px] text-muted-foreground">
+            Não é admin? <Link to="/auth" className="text-primary underline">Entrar como usuário</Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
