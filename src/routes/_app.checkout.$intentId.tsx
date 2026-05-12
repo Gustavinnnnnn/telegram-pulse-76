@@ -20,6 +20,7 @@ function CheckoutPage() {
   const fetchStatus = useServerFn(getCheckoutStatus);
   const [copied, setCopied] = useState(false);
   const [secsLeft, setSecsLeft] = useState<number | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   const { data: intent, isLoading } = useQuery({
     queryKey: ["intent", intentId],
@@ -36,6 +37,16 @@ function CheckoutPage() {
     const int = setInterval(tick, 1000);
     return () => clearInterval(int);
   }, [intent?.expires_at]);
+
+  // Generate QR locally as fallback / always (more reliable than provider base64)
+  useEffect(() => {
+    if (!intent?.qr_code) { setQrDataUrl(null); return; }
+    let cancelled = false;
+    QRCode.toDataURL(intent.qr_code, { width: 320, margin: 1, color: { dark: "#000000", light: "#ffffff" } })
+      .then((url) => { if (!cancelled) setQrDataUrl(url); })
+      .catch(() => { if (!cancelled) setQrDataUrl(null); });
+    return () => { cancelled = true; };
+  }, [intent?.qr_code]);
 
   // Approved → redirect
   useEffect(() => {
