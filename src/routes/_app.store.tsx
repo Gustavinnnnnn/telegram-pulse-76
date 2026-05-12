@@ -7,6 +7,7 @@ import { compactNumber, currency, dms } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import QRCode from "qrcode";
 
 export const Route = createFileRoute("/_app/store")({
   component: StorePage,
@@ -39,7 +40,19 @@ function StorePage() {
   const [creating, setCreating] = useState(false);
   const [pix, setPix] = useState<PixIntent | null>(null);
   const [pixStatus, setPixStatus] = useState<"pending" | "approved" | "failed" | string>("pending");
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
+
+  // Generate QR code locally from PIX copy-paste string when gateway doesn't return base64
+  useEffect(() => {
+    if (!pix) { setQrDataUrl(null); return; }
+    if (pix.qr_code_base64) { setQrDataUrl(null); return; }
+    let cancelled = false;
+    QRCode.toDataURL(pix.qr_code, { width: 320, margin: 1, errorCorrectionLevel: "M" })
+      .then((url) => { if (!cancelled) setQrDataUrl(url); })
+      .catch(() => { if (!cancelled) setQrDataUrl(null); });
+    return () => { cancelled = true; };
+  }, [pix]);
 
   const balance = profile?.dm_balance ?? 0;
   const totalBought = useMemo(() => purchases.reduce((a, p) => a + p.quantity, 0), [purchases]);
@@ -282,8 +295,8 @@ function StorePage() {
 
       {/* Checkout modal */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4">
-          <div className="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-border/60 bg-surface-1 p-5 sm:p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4 overflow-y-auto">
+          <div className="w-full h-full sm:h-auto sm:max-w-lg sm:max-h-[92vh] overflow-y-auto sm:rounded-3xl border-0 sm:border sm:border-border/60 bg-surface-1 p-5 sm:p-6 shadow-2xl flex flex-col justify-center sm:block min-h-screen sm:min-h-0">
             <div className="flex items-start justify-between">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-primary">{pix ? "Pagamento PIX" : "Checkout"}</p>
@@ -328,13 +341,18 @@ function StorePage() {
               <div className="mt-4 space-y-4">
                 <div className="rounded-2xl border border-border/40 bg-white p-3 flex items-center justify-center">
                   {pix.qr_code_base64 ? (
-                    <img src={pix.qr_code_base64} alt="QR Code PIX" className="h-56 w-56 object-contain" />
+                    <img src={pix.qr_code_base64} alt="QR Code PIX" className="h-64 w-64 object-contain" />
+                  ) : qrDataUrl ? (
+                    <img src={qrDataUrl} alt="QR Code PIX" className="h-64 w-64 object-contain" />
                   ) : (
-                    <div className="h-56 w-56 flex items-center justify-center text-xs text-black/60">
-                      QR não disponível, use o código abaixo
+                    <div className="h-64 w-64 flex items-center justify-center text-xs text-black/60">
+                      <Loader2 className="h-5 w-5 animate-spin" />
                     </div>
                   )}
                 </div>
+                <p className="text-center text-[11px] text-muted-foreground -mt-2">
+                  Escaneie o QR Code no app do seu banco ou use o código abaixo
+                </p>
 
                 <div>
                   <p className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground mb-1">PIX Copia e Cola</p>
