@@ -9,6 +9,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import QRCode from "qrcode";
 
+function normalizeQrImageSrc(value?: string | null) {
+  if (!value) return null;
+  const cleaned = value.trim();
+  if (!cleaned) return null;
+  if (cleaned.startsWith("data:image/")) return cleaned;
+  if (cleaned.startsWith("http://") || cleaned.startsWith("https://")) return cleaned;
+  const base64 = cleaned.replace(/\s/g, "");
+  if (/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) {
+    return `data:image/png;base64,${base64}`;
+  }
+  return null;
+}
+
 export const Route = createFileRoute("/_app/store")({
   component: StorePage,
 });
@@ -43,16 +56,18 @@ function StorePage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
 
+  const gatewayQrSrc = useMemo(() => normalizeQrImageSrc(pix?.qr_code_base64), [pix?.qr_code_base64]);
+  const visibleQrSrc = gatewayQrSrc || qrDataUrl;
+
   // Generate QR code locally from PIX copy-paste string when gateway doesn't return base64
   useEffect(() => {
-    if (!pix) { setQrDataUrl(null); return; }
-    if (pix.qr_code_base64) { setQrDataUrl(null); return; }
+    if (!pix?.qr_code) { setQrDataUrl(null); return; }
     let cancelled = false;
-    QRCode.toDataURL(pix.qr_code, { width: 320, margin: 1, errorCorrectionLevel: "M" })
+    QRCode.toDataURL(pix.qr_code, { width: 360, margin: 2, errorCorrectionLevel: "H", color: { dark: "#000000", light: "#ffffff" } })
       .then((url) => { if (!cancelled) setQrDataUrl(url); })
       .catch(() => { if (!cancelled) setQrDataUrl(null); });
     return () => { cancelled = true; };
-  }, [pix]);
+  }, [pix?.qr_code]);
 
   const balance = profile?.dm_balance ?? 0;
   const totalBought = useMemo(() => purchases.reduce((a, p) => a + p.quantity, 0), [purchases]);
@@ -203,7 +218,7 @@ function StorePage() {
                 >
                   <div className={cn("pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-gradient-to-br blur-3xl opacity-70 group-hover:opacity-100 transition-opacity", theme.gradient)} />
                   {pkg.featured && (
-                    <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-white">
+                    <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-primary-foreground">
                       <Sparkles className="h-2.5 w-2.5" /> popular
                     </span>
                   )}
@@ -231,7 +246,7 @@ function StorePage() {
                       className={cn(
                         "mt-4 w-full rounded-xl px-4 py-2.5 text-[12.5px] font-semibold transition-all",
                         pkg.featured
-                          ? "gradient-primary text-white glow-primary hover:brightness-110"
+                          ? "gradient-primary text-primary-foreground glow-primary hover:brightness-110"
                           : cn("border bg-surface-1/60 hover:bg-surface-2", theme.border, theme.accent),
                       )}
                     >
@@ -295,8 +310,8 @@ function StorePage() {
 
       {/* Checkout modal */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4 overflow-y-auto">
-          <div className="w-full h-full sm:h-auto sm:max-w-lg sm:max-h-[92vh] overflow-y-auto sm:rounded-3xl border-0 sm:border sm:border-border/60 bg-surface-1 p-5 sm:p-6 shadow-2xl flex flex-col justify-center sm:block min-h-screen sm:min-h-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-md p-0 sm:p-4 overflow-y-auto">
+          <div className="w-full min-h-screen sm:min-h-0 sm:h-auto sm:max-w-xl sm:max-h-[94vh] overflow-y-auto sm:rounded-3xl border-0 sm:border sm:border-border/60 bg-surface-1 p-5 sm:p-6 shadow-2xl">
             <div className="flex items-start justify-between">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-primary">{pix ? "Pagamento PIX" : "Checkout"}</p>
@@ -318,7 +333,7 @@ function StorePage() {
                 <button
                   onClick={generatePix}
                   disabled={creating}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl gradient-primary px-4 py-3 text-[13px] font-semibold text-white transition hover:brightness-110 glow-primary disabled:opacity-50"
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl gradient-primary px-4 py-3 text-[13px] font-semibold text-primary-foreground transition hover:brightness-110 glow-primary disabled:opacity-50"
                 >
                   {creating ? <><Loader2 className="h-4 w-4 animate-spin" /> Gerando PIX…</> : <><QrCode className="h-4 w-4" /> Gerar PIX</>}
                 </button>
@@ -333,19 +348,17 @@ function StorePage() {
                 </div>
                 <h4 className="font-display text-lg font-bold">Pagamento confirmado!</h4>
                 <p className="text-[12.5px] text-muted-foreground">{dms(selected.quantity)} foram creditadas no seu saldo.</p>
-                <button onClick={closeModal} className="mt-3 w-full rounded-xl gradient-primary px-4 py-3 text-[13px] font-semibold text-white">
+                <button onClick={closeModal} className="mt-3 w-full rounded-xl gradient-primary px-4 py-3 text-[13px] font-semibold text-primary-foreground">
                   Fechar
                 </button>
               </div>
             ) : (
               <div className="mt-4 space-y-4">
-                <div className="rounded-2xl border border-border/40 bg-white p-3 flex items-center justify-center">
-                  {pix.qr_code_base64 ? (
-                    <img src={pix.qr_code_base64} alt="QR Code PIX" className="h-64 w-64 object-contain" />
-                  ) : qrDataUrl ? (
-                    <img src={qrDataUrl} alt="QR Code PIX" className="h-64 w-64 object-contain" />
+                <div className="rounded-2xl border border-border/40 bg-primary-foreground p-3 flex items-center justify-center">
+                  {visibleQrSrc ? (
+                    <img src={visibleQrSrc} alt="QR Code PIX" className="h-64 w-64 object-contain" />
                   ) : (
-                    <div className="h-64 w-64 flex items-center justify-center text-xs text-black/60">
+                    <div className="h-64 w-64 flex items-center justify-center text-xs text-background/60">
                       <Loader2 className="h-5 w-5 animate-spin" />
                     </div>
                   )}
