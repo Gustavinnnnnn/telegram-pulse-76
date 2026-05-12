@@ -225,8 +225,7 @@ function StorePage() {
             <div className="mt-4 space-y-2.5">
               <Input icon={User} placeholder="Nome completo" value={form.name} onChange={(v) => setForm(f => ({ ...f, name: v }))} />
               <Input icon={Mail} placeholder="E-mail" type="email" value={form.email} onChange={(v) => setForm(f => ({ ...f, email: v }))} />
-              <Input icon={IdCard} placeholder="CPF" value={form.document} onChange={(v) => setForm(f => ({ ...f, document: maskCpf(v) }))} inputMode="numeric" />
-              <Input icon={Phone} placeholder="Telefone com DDD" value={form.phone} onChange={(v) => setForm(f => ({ ...f, phone: maskPhone(v) }))} inputMode="tel" />
+              <p className="text-[10.5px] text-muted-foreground leading-relaxed">Sem necessidade de CPF. Você só precisa do nome e e-mail para receber a confirmação.</p>
             </div>
 
             <button
