@@ -261,6 +261,30 @@ function NewCampaignPage() {
                   </div>
                 </Field>
 
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Idade mínima">
+                    <select value={ageMin} onChange={(e) => { const v = parseInt(e.target.value); setAgeMin(v); if (v > ageMax) setAgeMax(v); }} className={inputCls}>
+                      {AGES.map((a) => <option key={a} value={a}>{a} anos</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Idade máxima">
+                    <select value={ageMax} onChange={(e) => { const v = parseInt(e.target.value); setAgeMax(v); if (v < ageMin) setAgeMin(v); }} className={inputCls}>
+                      {AGES.map((a) => <option key={a} value={a}>{a} anos</option>)}
+                    </select>
+                  </Field>
+                </div>
+
+                <Field label="Sexo do público">
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {(Object.keys(genderLabels) as Gender[]).map((g) => (
+                      <button key={g} type="button" onClick={() => setGender(g)}
+                        className={cn("rounded-lg border px-3 py-2 text-[11.5px] font-semibold transition", gender === g ? "border-primary bg-primary/15 text-primary" : "border-border/60 text-muted-foreground hover:text-foreground")}>
+                        {genderLabels[g]}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+
                 <Field label="Volume de DMs">
                   <div className="flex flex-wrap gap-1.5">
                     {QUICK_VOLUMES.filter(v => v <= balance).map(v => (
