@@ -198,6 +198,8 @@ export function AppLayout() {
           })}
         </ul>
       </nav>
+
+      <WhatsAppFab />
     </div>
   );
 }
