@@ -130,7 +130,7 @@ function StorePage() {
                     </ul>
 
                     <button
-                      onClick={() => { setSelected(pkg); setForm({ name: profile?.display_name || "", email: "", document: "", phone: "" }); }}
+                      onClick={() => { setSelected(pkg); setForm({ name: profile?.display_name || "", email: "" }); }}
                       className={cn(
                         "mt-4 w-full rounded-xl px-4 py-2.5 text-[12.5px] font-semibold transition-all",
                         pkg.featured
