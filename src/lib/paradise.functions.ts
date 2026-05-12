@@ -44,18 +44,28 @@ export const createCheckout = createServerFn({ method: "POST" })
     const docDigits = onlyDigits(data.document || "") || "00000000000";
     const phoneDigits = onlyDigits(data.phone || "") || "11999999999";
 
-    const tx = await createParadiseTransaction({
-      amountCents,
-      description: `${pkg.name} — ${pkg.quantity} DMs`,
-      reference,
-      postbackUrl,
-      customer: {
-        name: data.name,
-        email: data.email,
-        document: docDigits,
-        phone: phoneDigits,
-      },
-    });
+    let tx;
+    try {
+      tx = await createParadiseTransaction({
+        amountCents,
+        description: `${pkg.name} — ${pkg.quantity} DMs`,
+        reference,
+        postbackUrl,
+        customer: {
+          name: data.name,
+          email: data.email,
+          document: docDigits,
+          phone: phoneDigits,
+        },
+      });
+    } catch (err) {
+      console.error("[createCheckout] Paradise error:", err);
+      throw new Error(err instanceof Error ? err.message : "Falha ao gerar PIX na Paradise");
+    }
+    if (!tx?.qr_code) {
+      console.error("[createCheckout] Paradise sem qr_code:", tx);
+      throw new Error("Paradise não retornou QR code");
+    }
 
     const ad = admin();
     const { data: intent, error: intErr } = await ad.from("payment_intents").insert({
