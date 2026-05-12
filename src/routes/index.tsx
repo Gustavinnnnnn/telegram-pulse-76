@@ -271,6 +271,7 @@ function LandingPage() {
           </div>
         </div>
       </footer>
+      <WhatsAppFab />
     </main>
   );
 }
