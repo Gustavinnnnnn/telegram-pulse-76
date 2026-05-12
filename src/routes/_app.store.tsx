@@ -1,10 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { Package, Zap, ShieldCheck, Sparkles, Receipt, Check, Clock, Info, X, Loader2, User, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useProfile, usePackages, usePurchases, type DMPackage } from "@/lib/queries";
-import { createCheckout } from "@/lib/paradise.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { compactNumber, currency, dms } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +25,6 @@ function StorePage() {
   const { data: packages = [], isLoading } = usePackages();
   const { data: purchases = [] } = usePurchases();
   const navigate = useNavigate();
-  const checkoutFn = useServerFn(createCheckout);
   const [selected, setSelected] = useState<DMPackage | null>(null);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: "", email: "" });
@@ -41,7 +39,21 @@ function StorePage() {
     if (!/^\S+@\S+\.\S+$/.test(form.email)) return toast.error("E-mail inválido");
     setBusy(true);
     try {
-      const res = await checkoutFn({ data: { package_id: selected.id, name: form.name.trim(), email: form.email.trim() } });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Faça login novamente para gerar o PIX");
+
+      const response = await fetch("/api/public/paradise-checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ package_id: selected.id, name: form.name.trim(), email: form.email.trim() }),
+      });
+      const res = await response.json().catch(() => null) as { intent_id?: string; error?: string } | null;
+      if (!response.ok) throw new Error(res?.error || "Erro ao gerar PIX na Paradise");
+      if (!res?.intent_id) throw new Error("A Paradise não retornou um pagamento válido");
+
       navigate({ to: "/checkout/$intentId", params: { intentId: res.intent_id } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao gerar PIX");
