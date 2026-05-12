@@ -11,8 +11,8 @@ const checkoutSchema = z.object({
   package_id: z.string().uuid(),
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(180),
-  document: z.string().trim().min(11).max(20),
-  phone: z.string().trim().min(8).max(20),
+  document: z.string().trim().optional(),
+  phone: z.string().trim().optional(),
 });
 
 function admin() {
@@ -40,6 +40,10 @@ export const createCheckout = createServerFn({ method: "POST" })
       "https://project--3f164f0d-eb76-4b26-a09b-f90951ebe76d.lovable.app";
     const postbackUrl = `${origin}/api/public/paradise-webhook`;
 
+    // Default doc/phone — we don't ask the customer for these on the form
+    const docDigits = onlyDigits(data.document || "") || "00000000000";
+    const phoneDigits = onlyDigits(data.phone || "") || "11999999999";
+
     const tx = await createParadiseTransaction({
       amountCents,
       description: `${pkg.name} — ${pkg.quantity} DMs`,
@@ -48,8 +52,8 @@ export const createCheckout = createServerFn({ method: "POST" })
       customer: {
         name: data.name,
         email: data.email,
-        document: onlyDigits(data.document),
-        phone: onlyDigits(data.phone),
+        document: docDigits,
+        phone: phoneDigits,
       },
     });
 
@@ -62,8 +66,8 @@ export const createCheckout = createServerFn({ method: "POST" })
       amount_cents: amountCents,
       customer_name: data.name,
       customer_email: data.email,
-      customer_document: onlyDigits(data.document),
-      customer_phone: onlyDigits(data.phone),
+      customer_document: docDigits,
+      customer_phone: phoneDigits,
       reference,
       gateway_transaction_id: String(tx.transaction_id),
       qr_code: tx.qr_code,

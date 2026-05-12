@@ -34,8 +34,11 @@ export function TelegramAdPreview({
 }: Props) {
   const recipient = pickRecipient((text || "") + channelName);
   const [phase, setPhase] = useState<0 | 1 | 2 | 3 | 4>(simulateDelivery ? 0 : 4);
-  const [now, setNow] = useState(() => new Date());
-  const startedAt = useRef(Date.now());
+  const [now, setNow] = useState<Date | null>(null); // null on SSR to avoid hydration mismatch
+  const startedAt = useRef(0);
+
+  // Initialise time on the client only
+  useEffect(() => { setNow(new Date()); startedAt.current = Date.now(); }, []);
 
   useEffect(() => {
     if (!simulateDelivery) return;
@@ -49,7 +52,7 @@ export function TelegramAdPreview({
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); clearInterval(ticker); };
   }, [simulateDelivery, text]);
 
-  const time = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const time = now ? now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "--:--";
 
   return (
     <div className="relative mx-auto w-full max-w-[340px]">

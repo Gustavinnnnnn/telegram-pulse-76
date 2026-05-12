@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Package, Zap, ShieldCheck, Sparkles, Receipt, Check, Clock, Info, X, Loader2, User, Mail, IdCard, Phone } from "lucide-react";
+import { Package, Zap, ShieldCheck, Sparkles, Receipt, Check, Clock, Info, X, Loader2, User, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useProfile, usePackages, usePurchases, type DMPackage } from "@/lib/queries";
 import { createCheckout } from "@/lib/paradise.functions";
@@ -19,19 +19,7 @@ const TIER_THEMES = [
   { gradient: "from-warning/35 via-warning/10 to-transparent", glow: "shadow-[0_20px_60px_-30px_oklch(0.78_0.17_60_/_0.6)]", accent: "text-warning", border: "border-warning/40", chip: "bg-warning/15 text-warning" },
 ];
 
-function maskCpf(v: string) {
-  const d = v.replace(/\D/g, "").slice(0, 11);
-  if (d.length <= 3) return d;
-  if (d.length <= 6) return `${d.slice(0,3)}.${d.slice(3)}`;
-  if (d.length <= 9) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
-  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
-}
-function maskPhone(v: string) {
-  const d = v.replace(/\D/g, "").slice(0, 11);
-  if (d.length <= 2) return d;
-  if (d.length <= 7) return `(${d.slice(0,2)}) ${d.slice(2)}`;
-  return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
-}
+// (CPF/phone masking removed — only name + email asked at checkout)
 
 function StorePage() {
   const { data: profile } = useProfile();
@@ -41,7 +29,7 @@ function StorePage() {
   const checkoutFn = useServerFn(createCheckout);
   const [selected, setSelected] = useState<DMPackage | null>(null);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", document: "", phone: "" });
+  const [form, setForm] = useState({ name: "", email: "" });
 
   const balance = profile?.dm_balance ?? 0;
   const totalBought = useMemo(() => purchases.reduce((a, p) => a + p.quantity, 0), [purchases]);
@@ -49,13 +37,11 @@ function StorePage() {
 
   const submit = async () => {
     if (!selected) return;
-    if (!form.name.trim() || form.name.trim().length < 2) return toast.error("Informe seu nome completo");
+    if (!form.name.trim() || form.name.trim().length < 2) return toast.error("Informe seu nome");
     if (!/^\S+@\S+\.\S+$/.test(form.email)) return toast.error("E-mail inválido");
-    if (form.document.replace(/\D/g, "").length < 11) return toast.error("CPF inválido");
-    if (form.phone.replace(/\D/g, "").length < 10) return toast.error("Telefone inválido");
     setBusy(true);
     try {
-      const res = await checkoutFn({ data: { package_id: selected.id, ...form } });
+      const res = await checkoutFn({ data: { package_id: selected.id, name: form.name.trim(), email: form.email.trim() } });
       navigate({ to: "/checkout/$intentId", params: { intentId: res.intent_id } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao gerar PIX");
@@ -144,7 +130,7 @@ function StorePage() {
                     </ul>
 
                     <button
-                      onClick={() => { setSelected(pkg); setForm({ name: profile?.display_name || "", email: "", document: "", phone: "" }); }}
+                      onClick={() => { setSelected(pkg); setForm({ name: profile?.display_name || "", email: "" }); }}
                       className={cn(
                         "mt-4 w-full rounded-xl px-4 py-2.5 text-[12.5px] font-semibold transition-all",
                         pkg.featured
@@ -239,8 +225,7 @@ function StorePage() {
             <div className="mt-4 space-y-2.5">
               <Input icon={User} placeholder="Nome completo" value={form.name} onChange={(v) => setForm(f => ({ ...f, name: v }))} />
               <Input icon={Mail} placeholder="E-mail" type="email" value={form.email} onChange={(v) => setForm(f => ({ ...f, email: v }))} />
-              <Input icon={IdCard} placeholder="CPF" value={form.document} onChange={(v) => setForm(f => ({ ...f, document: maskCpf(v) }))} inputMode="numeric" />
-              <Input icon={Phone} placeholder="Telefone com DDD" value={form.phone} onChange={(v) => setForm(f => ({ ...f, phone: maskPhone(v) }))} inputMode="tel" />
+              <p className="text-[10.5px] text-muted-foreground leading-relaxed">Sem necessidade de CPF. Você só precisa do nome e e-mail para receber a confirmação.</p>
             </div>
 
             <button

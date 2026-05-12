@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Copy, Check, ShieldCheck, Clock, ArrowLeft, Loader2, Package, Sparkles, QrCode } from "lucide-react";
 import { toast } from "sonner";
+import QRCode from "qrcode";
 import { getCheckoutStatus } from "@/lib/paradise.functions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { compactNumber, currency } from "@/lib/format";
@@ -19,6 +20,7 @@ function CheckoutPage() {
   const fetchStatus = useServerFn(getCheckoutStatus);
   const [copied, setCopied] = useState(false);
   const [secsLeft, setSecsLeft] = useState<number | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   const { data: intent, isLoading } = useQuery({
     queryKey: ["intent", intentId],
@@ -35,6 +37,16 @@ function CheckoutPage() {
     const int = setInterval(tick, 1000);
     return () => clearInterval(int);
   }, [intent?.expires_at]);
+
+  // Generate QR locally as fallback / always (more reliable than provider base64)
+  useEffect(() => {
+    if (!intent?.qr_code) { setQrDataUrl(null); return; }
+    let cancelled = false;
+    QRCode.toDataURL(intent.qr_code, { width: 320, margin: 1, color: { dark: "#000000", light: "#ffffff" } })
+      .then((url) => { if (!cancelled) setQrDataUrl(url); })
+      .catch(() => { if (!cancelled) setQrDataUrl(null); });
+    return () => { cancelled = true; };
+  }, [intent?.qr_code]);
 
   // Approved → redirect
   useEffect(() => {
@@ -156,8 +168,8 @@ function CheckoutPage() {
                   <QrCode className="h-3 w-3" /> Aponte a câmera ou copie o código
                 </div>
                 <div className="flex justify-center rounded-2xl border border-border/40 bg-white p-4">
-                  {intent.qr_code_base64 ? (
-                    <img src={intent.qr_code_base64} alt="QR Code PIX" className="h-56 w-56" />
+                  {qrDataUrl || intent.qr_code_base64 ? (
+                    <img src={qrDataUrl || intent.qr_code_base64!} alt="QR Code PIX" className="h-56 w-56" />
                   ) : (
                     <div className="flex h-56 w-56 items-center justify-center text-muted-foreground">
                       <Loader2 className="h-6 w-6 animate-spin" />
