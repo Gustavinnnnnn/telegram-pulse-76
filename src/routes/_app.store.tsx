@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Package, Zap, ShieldCheck, Sparkles, Receipt, Check, Clock, Info, X, Loader2, AlertCircle } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Package, Zap, ShieldCheck, Sparkles, Receipt, Check, Clock, Info, X, Loader2, Copy, QrCode, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { useProfile, usePackages, usePurchases, usePurchasePackage, type DMPackage } from "@/lib/queries";
+import { useProfile, usePackages, usePurchases, type DMPackage } from "@/lib/queries";
 import { compactNumber, currency, dms } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_app/store")({
   component: StorePage,
@@ -17,25 +19,116 @@ const TIER_THEMES = [
   { gradient: "from-warning/35 via-warning/10 to-transparent", glow: "shadow-[0_20px_60px_-30px_oklch(0.78_0.17_60_/_0.6)]", accent: "text-warning", border: "border-warning/40", chip: "bg-warning/15 text-warning" },
 ];
 
+type PixIntent = {
+  intent_id: string;
+  reference: string;
+  qr_code: string;
+  qr_code_base64: string | null;
+  amount_cents: number;
+  expires_at: string | null;
+};
+
 function StorePage() {
   const { data: profile } = useProfile();
   const { data: packages = [], isLoading } = usePackages();
   const { data: purchases = [] } = usePurchases();
-  const purchase = usePurchasePackage();
+  const qc = useQueryClient();
+
   const [selected, setSelected] = useState<DMPackage | null>(null);
+  const [form, setForm] = useState({ name: "", email: "", document: "", phone: "" });
+  const [creating, setCreating] = useState(false);
+  const [pix, setPix] = useState<PixIntent | null>(null);
+  const [pixStatus, setPixStatus] = useState<"pending" | "approved" | "failed" | string>("pending");
+  const pollRef = useRef<number | null>(null);
 
   const balance = profile?.dm_balance ?? 0;
   const totalBought = useMemo(() => purchases.reduce((a, p) => a + p.quantity, 0), [purchases]);
   const totalSpent = useMemo(() => purchases.reduce((a, p) => a + Number(p.price_brl), 0), [purchases]);
 
-  const confirm = async () => {
+  // Prefill form with user info
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setForm((f) => ({
+          ...f,
+          email: f.email || user.email || "",
+          name: f.name || (user.user_metadata?.display_name as string) || "",
+        }));
+      }
+    })();
+  }, []);
+
+  const closeModal = () => {
+    setSelected(null);
+    setPix(null);
+    setPixStatus("pending");
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+  };
+
+  const generatePix = async () => {
     if (!selected) return;
+    if (!form.name || !form.email || !form.document || !form.phone) {
+      toast.error("Preencha todos os dados para gerar o PIX");
+      return;
+    }
+    setCreating(true);
     try {
-      const res = await purchase.mutateAsync(selected.id);
-      toast.success(`+${dms(res.quantity)} creditadas no seu saldo`);
-      setSelected(null);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("Sessão expirada"); setCreating(false); return; }
+      const res = await fetch("/api/public/paradise-create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ package_id: selected.id, customer: form }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json?.error || "Falha ao gerar PIX");
+        setCreating(false);
+        return;
+      }
+      setPix(json as PixIntent);
+      setPixStatus("pending");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao processar compra");
+      toast.error(e instanceof Error ? e.message : "Erro ao gerar PIX");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // Poll status while modal open with PIX
+  useEffect(() => {
+    if (!pix || pixStatus === "approved") return;
+    const tick = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const r = await fetch(`/api/public/paradise-status?reference=${encodeURIComponent(pix.reference)}`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const j = await r.json();
+        if (j?.status) {
+          setPixStatus(j.status);
+          if (j.status === "approved") {
+            qc.invalidateQueries({ queryKey: ["profile"] });
+            qc.invalidateQueries({ queryKey: ["purchases"] });
+            toast.success("Pagamento confirmado! DMs creditadas.");
+          }
+        }
+      } catch {}
+    };
+    tick();
+    pollRef.current = window.setInterval(tick, 4000);
+    return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
+  }, [pix, pixStatus, qc]);
+
+  const copyPix = async () => {
+    if (!pix) return;
+    try {
+      await navigator.clipboard.writeText(pix.qr_code);
+      toast.success("Código PIX copiado");
+    } catch {
+      toast.error("Não foi possível copiar");
     }
   };
 
@@ -47,18 +140,7 @@ function StorePage() {
           <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Loja de DMs</span>
         </div>
         <h1 className="mt-1 font-display text-[22px] font-bold tracking-tight sm:text-[28px] md:text-[32px]">Compre pacotes de disparos</h1>
-        <p className="text-[12.5px] text-muted-foreground">Saldo creditado automaticamente após a confirmação.</p>
-      </div>
-
-      {/* Aviso: pagamento ainda não conectado */}
-      <div className="tile flex items-start gap-3 border-warning/30 bg-warning/5 p-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warning/15 text-warning">
-          <AlertCircle className="h-4 w-4" />
-        </div>
-        <div className="text-[12px] leading-relaxed">
-          <p className="font-semibold">Gateway de pagamento não configurado</p>
-          <p className="text-muted-foreground">Por enquanto as compras são creditadas imediatamente em modo de demonstração. Conecte uma plataforma de pagamento para gerar PIX real.</p>
-        </div>
+        <p className="text-[12.5px] text-muted-foreground">Pagamento via PIX. Saldo creditado automaticamente após confirmação.</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -86,7 +168,7 @@ function StorePage() {
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-display text-base font-bold">Pacotes disponíveis</h2>
           <span className="hidden sm:inline-flex items-center gap-1 text-[10.5px] text-muted-foreground">
-            <ShieldCheck className="h-3 w-3" /> liberação imediata
+            <ShieldCheck className="h-3 w-3" /> liberação após PIX
           </span>
         </div>
 
@@ -132,7 +214,7 @@ function StorePage() {
                     </ul>
 
                     <button
-                      onClick={() => setSelected(pkg)}
+                      onClick={() => { setSelected(pkg); setPix(null); setPixStatus("pending"); }}
                       className={cn(
                         "mt-4 w-full rounded-xl px-4 py-2.5 text-[12.5px] font-semibold transition-all",
                         pkg.featured
@@ -140,7 +222,7 @@ function StorePage() {
                           : cn("border bg-surface-1/60 hover:bg-surface-2", theme.border, theme.accent),
                       )}
                     >
-                      <span className="inline-flex items-center justify-center gap-1.5"><Zap className="h-3.5 w-3.5" /> Comprar agora</span>
+                      <span className="inline-flex items-center justify-center gap-1.5"><Zap className="h-3.5 w-3.5" /> Comprar com PIX</span>
                     </button>
                   </div>
                 </div>
@@ -156,7 +238,7 @@ function StorePage() {
         </div>
         <div className="text-[12px] leading-relaxed">
           <p className="font-semibold">Como funciona?</p>
-          <p className="text-muted-foreground">Selecione um pacote e confirme. Suas DMs entram automaticamente no saldo e ficam disponíveis para usar em qualquer campanha.</p>
+          <p className="text-muted-foreground">Selecione o pacote, preencha seus dados e gere o PIX. Após pagar, suas DMs entram no saldo automaticamente.</p>
         </div>
       </div>
 
@@ -198,44 +280,103 @@ function StorePage() {
         )}
       </div>
 
-      {/* Confirm modal */}
+      {/* Checkout modal */}
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4 animate-[fade-in_0.2s_ease-out]">
-          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-border/60 bg-surface-1 p-5 sm:p-6 shadow-2xl animate-[slide-up_0.25s_ease-out]">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4">
+          <div className="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-border/60 bg-surface-1 p-5 sm:p-6 shadow-2xl">
             <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Confirmar compra</p>
-                <h3 className="mt-0.5 font-display text-lg font-bold">Adicionar ao saldo</h3>
-                <p className="text-[12px] text-muted-foreground">As DMs ficam disponíveis imediatamente.</p>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-primary">{pix ? "Pagamento PIX" : "Checkout"}</p>
+                <h3 className="mt-0.5 font-display text-lg font-bold truncate">{selected.name} · {compactNumber(selected.quantity)} DMs</h3>
+                <p className="text-[12px] text-muted-foreground">{currency(Number(selected.price_brl))}</p>
               </div>
-              <button onClick={() => setSelected(null)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-2 hover:text-foreground">
+              <button onClick={closeModal} className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface-2 hover:text-foreground">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="mt-3 rounded-xl border border-border/40 bg-surface-2/40 p-3 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg gradient-primary text-white"><Package className="h-5 w-5" /></div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[12.5px] font-semibold truncate">{selected.name} · {compactNumber(selected.quantity)} DMs</p>
-                <p className="text-[10.5px] text-muted-foreground">Modo demonstração</p>
-              </div>
-              <p className="font-display text-lg font-bold tabular shrink-0">{currency(Number(selected.price_brl))}</p>
-            </div>
+            {!pix ? (
+              <div className="mt-4 space-y-3">
+                <Field label="Nome completo" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="Seu nome" />
+                <Field label="E-mail" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} placeholder="voce@email.com" />
+                <Field label="CPF" value={form.document} onChange={(v) => setForm({ ...form, document: v.replace(/\D/g, "").slice(0, 14) })} placeholder="000.000.000-00" inputMode="numeric" />
+                <Field label="Telefone (DDD + número)" value={form.phone} onChange={(v) => setForm({ ...form, phone: v.replace(/\D/g, "").slice(0, 13) })} placeholder="11999999999" inputMode="numeric" />
 
-            <button
-              onClick={confirm}
-              disabled={purchase.isPending}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl gradient-primary px-4 py-3 text-[13px] font-semibold text-white transition hover:brightness-110 glow-primary disabled:opacity-50"
-            >
-              {purchase.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Processando…</> : <>Confirmar e creditar <Zap className="h-4 w-4" /></>}
-            </button>
-            <p className="mt-2 text-center text-[10.5px] text-muted-foreground">
-              <ShieldCheck className="inline h-3 w-3 mr-1" /> Gateway de pagamento será conectado em breve
-            </p>
+                <button
+                  onClick={generatePix}
+                  disabled={creating}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl gradient-primary px-4 py-3 text-[13px] font-semibold text-white transition hover:brightness-110 glow-primary disabled:opacity-50"
+                >
+                  {creating ? <><Loader2 className="h-4 w-4 animate-spin" /> Gerando PIX…</> : <><QrCode className="h-4 w-4" /> Gerar PIX</>}
+                </button>
+                <p className="text-center text-[10.5px] text-muted-foreground">
+                  <ShieldCheck className="inline h-3 w-3 mr-1" /> Pagamento processado com segurança
+                </p>
+              </div>
+            ) : pixStatus === "approved" ? (
+              <div className="mt-6 flex flex-col items-center text-center gap-3 py-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success">
+                  <CheckCircle2 className="h-9 w-9" />
+                </div>
+                <h4 className="font-display text-lg font-bold">Pagamento confirmado!</h4>
+                <p className="text-[12.5px] text-muted-foreground">{dms(selected.quantity)} foram creditadas no seu saldo.</p>
+                <button onClick={closeModal} className="mt-3 w-full rounded-xl gradient-primary px-4 py-3 text-[13px] font-semibold text-white">
+                  Fechar
+                </button>
+              </div>
+            ) : (
+              <div className="mt-4 space-y-4">
+                <div className="rounded-2xl border border-border/40 bg-white p-3 flex items-center justify-center">
+                  {pix.qr_code_base64 ? (
+                    <img src={pix.qr_code_base64} alt="QR Code PIX" className="h-56 w-56 object-contain" />
+                  ) : (
+                    <div className="h-56 w-56 flex items-center justify-center text-xs text-black/60">
+                      QR não disponível, use o código abaixo
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground mb-1">PIX Copia e Cola</p>
+                  <div className="flex items-stretch gap-2">
+                    <div className="flex-1 min-w-0 rounded-lg border border-border/40 bg-surface-2/40 p-2 text-[10.5px] font-mono break-all max-h-20 overflow-y-auto">
+                      {pix.qr_code}
+                    </div>
+                    <button onClick={copyPix} className="shrink-0 rounded-lg border border-border/40 bg-surface-2 px-3 text-xs font-semibold hover:bg-surface-1 inline-flex items-center gap-1">
+                      <Copy className="h-3.5 w-3.5" /> Copiar
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-2 text-[12px] text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Aguardando pagamento…
+                </div>
+                <p className="text-center text-[10.5px] text-muted-foreground">
+                  Status: <span className="font-semibold">{pixStatus}</span> · ref {pix.reference.slice(-6)}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+function Field({ label, value, onChange, placeholder, type = "text", inputMode }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; inputMode?: "numeric" | "text" | "email" }) {
+  return (
+    <label className="block">
+      <span className="block text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground mb-1">{label}</span>
+      <input
+        type={type}
+        inputMode={inputMode}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-lg border border-border/40 bg-surface-2/40 px-3 py-2 text-[13px] outline-none focus:border-primary/60"
+      />
+    </label>
   );
 }
 
