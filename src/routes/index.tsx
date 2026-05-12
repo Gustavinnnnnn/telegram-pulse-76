@@ -104,29 +104,40 @@ function LandingPage() {
       </header>
 
       <section className="relative overflow-hidden border-b border-border/50">
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface-2)_54%,transparent),transparent_72%)]" />
-        <div className="mx-auto grid min-h-[calc(100svh-64px)] max-w-7xl gap-8 px-4 py-10 md:px-6 md:py-14 lg:grid-cols-[1fr_460px] lg:items-center">
-          <div className="max-w-3xl">
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,color-mix(in_oklab,var(--primary)_22%,transparent),transparent_70%)]" />
+          <div className="absolute -top-24 left-1/2 h-[420px] w-[820px] -translate-x-1/2 rounded-full bg-primary/15 blur-[120px]" />
+          <div className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] [background-size:48px_48px]" />
+        </div>
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 md:px-6 md:py-20 lg:grid-cols-[1.05fr_440px] lg:items-center lg:gap-14">
+          <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.18em] text-primary">
-              <span className="h-1.5 w-1.5 rounded-full bg-success" /> DM Ads para Telegram
+              <span className="relative flex h-1.5 w-1.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" /><span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" /></span>
+              Plataforma DM Ads · Telegram
             </div>
-            <h1 className="mt-5 font-display text-[40px] font-bold leading-[0.98] tracking-normal sm:text-[56px] md:text-[72px]">
-              Venda no Telegram sem depender de grupo, bot ou algoritmo.
+            <h1 className="mt-5 font-display text-[36px] font-bold leading-[1.02] tracking-tight sm:text-[52px] md:text-[64px]">
+              Sua oferta direto na <span className="text-gradient-primary">DM</span> de quem<br className="hidden sm:block"/> compra no Telegram.
             </h1>
-            <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-muted-foreground md:text-[18px]">
-              Monte uma campanha, escolha o público, compre créditos por PIX e envie sua oferta direto para conversas privadas com métricas de entrega e clique no painel.
+            <p className="mt-4 max-w-xl text-[14.5px] leading-relaxed text-muted-foreground md:text-[16px]">
+              Sem grupo, sem bot, sem algoritmo. Crie a campanha, pague por PIX e veja entregas, cliques e CTR no painel — em tempo real.
             </p>
 
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link to="/auth" className="inline-flex items-center justify-center gap-2 rounded-xl gradient-primary px-6 py-3.5 text-[14px] font-bold text-primary-foreground transition hover:brightness-110 glow-primary">
-                Começar agora <Rocket className="h-4 w-4" />
+                Criar conta grátis <Rocket className="h-4 w-4" />
               </Link>
               <a href="#produto" className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-1 px-6 py-3.5 text-[14px] font-bold transition hover:border-primary/50">
                 Ver demonstração <Play className="h-4 w-4 text-primary" />
               </a>
             </div>
 
-            <div className="mt-8 grid max-w-2xl grid-cols-3 gap-2 sm:gap-3">
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11.5px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-success"/> Sem mensalidade</span>
+              <span className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-success"/> Pagamento PIX</span>
+              <span className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-success"/> Saldo nunca expira</span>
+            </div>
+
+            <div className="mt-8 grid max-w-xl grid-cols-3 gap-2 sm:gap-3">
               {proof.map((item) => (
                 <div key={item.label} className="rounded-xl border border-border bg-surface-1/70 p-3">
                   <p className="font-display text-xl font-bold tabular text-gradient-primary sm:text-2xl">{item.value}</p>
@@ -136,8 +147,9 @@ function LandingPage() {
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[460px] lg:mx-0">
-            <div className="absolute -inset-3 -z-10 rounded-[2rem] border border-primary/15 bg-primary/5" />
+          <div className="relative mx-auto w-full max-w-[440px] lg:mx-0">
+            <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/25 via-cyan/10 to-transparent blur-2xl" />
+            <div className="absolute -inset-2 -z-10 rounded-[1.75rem] border border-primary/20 bg-primary/5" />
             <TelegramAdPreview
               channelName="Oferta VIP"
               channelHandle="@teleads_pro"
