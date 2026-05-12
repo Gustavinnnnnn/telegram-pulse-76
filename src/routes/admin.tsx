@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { LayoutDashboard, Users, Receipt, Settings as SettingsIcon, LogOut, Menu, X, Shield, ArrowLeft, Lock } from "lucide-react";
 import { toast } from "sonner";
