@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Copy, Check, ShieldCheck, Clock, ArrowLeft, Loader2, Package, Sparkles, QrCode } from "lucide-react";
 import { toast } from "sonner";
+import QRCode from "qrcode";
 import { getCheckoutStatus } from "@/lib/paradise.functions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { compactNumber, currency } from "@/lib/format";
