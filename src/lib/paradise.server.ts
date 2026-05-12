@@ -30,22 +30,30 @@ export async function createParadiseTransaction(input: {
     customer: input.customer,
   };
 
+  console.log("[Paradise] POST /transaction.php", { reference: input.reference, amount: input.amountCents });
   const res = await fetch(`${PARADISE_BASE}/transaction.php`, {
     method: "POST",
     headers: {
       "X-API-Key": apiKey,
       "Content-Type": "application/json",
+      "Accept": "application/json",
     },
     body: JSON.stringify(body),
   });
 
   const text = await res.text();
+  console.log("[Paradise] response status=", res.status, "body=", text.slice(0, 800));
   let json: any;
-  try { json = JSON.parse(text); } catch { throw new Error(`Paradise: resposta inválida (${res.status})`); }
-  if (!res.ok || json?.status === "error") {
-    throw new Error(json?.message || `Paradise: erro ${res.status}`);
+  try { json = JSON.parse(text); } catch { throw new Error(`Paradise respondeu inválido (HTTP ${res.status}): ${text.slice(0, 200)}`); }
+  if (!res.ok || json?.status === "error" || json?.success === false) {
+    throw new Error(json?.message || json?.error || `Paradise erro HTTP ${res.status}`);
   }
-  return json as ParadiseTransactionResponse;
+  // Normalize: some responses nest data under `data`
+  const tx = (json?.data && typeof json.data === "object") ? json.data : json;
+  if (!tx.qr_code && tx.pix?.qr_code) tx.qr_code = tx.pix.qr_code;
+  if (!tx.qr_code_base64 && tx.pix?.qr_code_base64) tx.qr_code_base64 = tx.pix.qr_code_base64;
+  if (!tx.transaction_id && tx.id) tx.transaction_id = tx.id;
+  return tx as ParadiseTransactionResponse;
 }
 
 export async function getParadiseTransaction(id: number | string) {
