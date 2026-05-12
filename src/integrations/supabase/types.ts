@@ -54,6 +54,8 @@ export type Database = {
       }
       campaigns: {
         Row: {
+          age_max: number
+          age_min: number
           button_label: string
           button_url: string
           clicks: number
@@ -61,6 +63,7 @@ export type Database = {
           description: string
           dm_sent: number
           dm_total: number
+          gender: Database["public"]["Enums"]["campaign_gender"]
           id: string
           impressions: number
           media_url: string | null
@@ -74,6 +77,8 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          age_max?: number
+          age_min?: number
           button_label?: string
           button_url?: string
           clicks?: number
@@ -81,6 +86,7 @@ export type Database = {
           description?: string
           dm_sent?: number
           dm_total?: number
+          gender?: Database["public"]["Enums"]["campaign_gender"]
           id?: string
           impressions?: number
           media_url?: string | null
@@ -94,6 +100,8 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          age_max?: number
+          age_min?: number
           button_label?: string
           button_url?: string
           clicks?: number
@@ -101,6 +109,7 @@ export type Database = {
           description?: string
           dm_sent?: number
           dm_total?: number
+          gender?: Database["public"]["Enums"]["campaign_gender"]
           id?: string
           impressions?: number
           media_url?: string | null
@@ -251,25 +260,52 @@ export type Database = {
       }
       profiles: {
         Row: {
+          banned: boolean
           created_at: string
           display_name: string | null
           dm_balance: number
+          email: string | null
           id: string
           updated_at: string
         }
         Insert: {
+          banned?: boolean
           created_at?: string
           display_name?: string | null
           dm_balance?: number
+          email?: string | null
           id: string
           updated_at?: string
         }
         Update: {
+          banned?: boolean
           created_at?: string
           display_name?: string | null
           dm_balance?: number
+          email?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -278,6 +314,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_balance: {
+        Args: { _delta: number; _user_id: string }
+        Returns: Json
+      }
+      admin_set_banned: {
+        Args: { _banned: boolean; _user_id: string }
+        Returns: Json
+      }
       confirm_payment_intent: {
         Args: { _gateway_tx: string; _reference: string }
         Returns: Json
@@ -286,9 +330,18 @@ export type Database = {
         Args: { _campaign_id: string; _qty: number }
         Returns: Json
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       purchase_dm_package: { Args: { _package_id: string }; Returns: Json }
     }
     Enums: {
+      app_role: "admin" | "user"
+      campaign_gender: "all" | "male" | "female"
       campaign_niche:
         | "gaming"
         | "income"
@@ -297,6 +350,11 @@ export type Database = {
         | "news"
         | "tech"
         | "lifestyle"
+        | "apostas"
+        | "hot"
+        | "fitness"
+        | "finance"
+        | "ecommerce"
       campaign_objective: "traffic" | "conversion" | "engagement"
       campaign_status: "draft" | "active" | "paused" | "completed"
       transaction_type: "deposit" | "spend" | "refund"
@@ -427,6 +485,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
+      campaign_gender: ["all", "male", "female"],
       campaign_niche: [
         "gaming",
         "income",
@@ -435,6 +495,11 @@ export const Constants = {
         "news",
         "tech",
         "lifestyle",
+        "apostas",
+        "hot",
+        "fitness",
+        "finance",
+        "ecommerce",
       ],
       campaign_objective: ["traffic", "conversion", "engagement"],
       campaign_status: ["draft", "active", "paused", "completed"],

@@ -14,6 +14,11 @@ export const objectiveLabels: Record<Campaign["objective"], string> = {
   engagement: "Engajamento",
 };
 export const nicheLabels: Record<Campaign["niche"], string> = {
+  apostas: "Apostas (Tigrinho)",
+  hot: "Hot +18",
+  finance: "Finanças",
+  ecommerce: "E-commerce",
+  fitness: "Fitness",
   gaming: "Gamer",
   income: "Renda extra",
   crypto: "Cripto",
@@ -21,6 +26,11 @@ export const nicheLabels: Record<Campaign["niche"], string> = {
   news: "Notícias",
   tech: "Tecnologia",
   lifestyle: "Lifestyle",
+};
+export const genderLabels: Record<"all" | "male" | "female", string> = {
+  all: "Todos",
+  male: "Homens",
+  female: "Mulheres",
 };
 export const statusLabels: Record<Campaign["status"], string> = {
   active: "Ativa",
