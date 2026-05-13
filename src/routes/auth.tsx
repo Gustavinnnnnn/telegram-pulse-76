@@ -77,7 +77,7 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md animate-[scale-in_0.3s_ease-out]">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <Logo size={56} />
+          <Logo size={110} />
           <div>
             <h1 className="text-2xl font-bold">Noc<span className="text-gradient-primary">tra</span></h1>
             <p className="text-xs text-muted-foreground">Plataforma de anúncios para Telegram</p>

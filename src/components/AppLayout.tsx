@@ -33,7 +33,7 @@ export function AppLayout() {
       {/* === DESKTOP SIDEBAR === */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[238px] flex-col border-r border-sidebar-border/70 bg-sidebar/85 backdrop-blur-xl md:flex">
         <div className="flex h-[60px] items-center gap-2.5 px-5">
-          <Logo size={32} />
+          <Logo size={52} />
           <Wordmark />
         </div>
 
@@ -127,7 +127,7 @@ export function AppLayout() {
         {/* === TOPBAR === */}
         <header className="sticky top-0 z-20 flex h-[60px] items-center justify-between gap-3 border-b border-border/50 bg-background/70 px-4 backdrop-blur-xl md:px-6">
           <div className="flex items-center gap-2.5 md:hidden">
-            <Logo size={28} />
+            <Logo size={44} />
             <Wordmark />
           </div>
 
