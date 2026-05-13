@@ -76,11 +76,9 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md animate-[scale-in_0.3s_ease-out]">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl gradient-primary glow-primary">
-            <Send className="h-6 w-6 text-primary-foreground" />
-          </div>
+          <Logo size={56} />
           <div>
-            <h1 className="text-2xl font-bold">TeleAds</h1>
+            <h1 className="text-2xl font-bold">Noc<span className="text-gradient-primary">tra</span></h1>
             <p className="text-xs text-muted-foreground">Plataforma de anúncios para Telegram</p>
           </div>
         </div>

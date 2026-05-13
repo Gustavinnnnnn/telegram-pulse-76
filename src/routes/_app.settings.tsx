@@ -306,7 +306,7 @@ function ApiSection({ userId }: { userId: string }) {
 
   return (
     <>
-      <Card title="Chave de API" desc="Use para integrar TeleAds no seu sistema">
+      <Card title="Chave de API" desc="Use para integrar Noctra no seu sistema">
         <div className="flex items-stretch gap-2">
           <input value={showKey ? apiKey : "•".repeat(28)} readOnly className={cn(inputCls, "font-mono text-[12px]")} />
           <button onClick={() => setShowKey(v => !v)} className="rounded-lg border border-border/60 bg-surface-1/60 px-3 text-muted-foreground hover:text-foreground">
@@ -323,7 +323,7 @@ function ApiSection({ userId }: { userId: string }) {
 
       <Card title="Webhooks" desc="Receba eventos das suas campanhas em tempo real">
         <Field label="URL de webhook">
-          <input value={webhook} onChange={e => setWebhook(e.target.value)} placeholder="https://api.suaempresa.com/webhooks/teleads" className={inputCls} />
+          <input value={webhook} onChange={e => setWebhook(e.target.value)} replace placeholder="https://api.suaempresa.com/webhooks/noctra" className={inputCls} />
         </Field>
         <p className="text-[10.5px] text-muted-foreground">Eventos: campaign.created · dm.sent · dm.delivered · click.received · campaign.completed</p>
         <button onClick={() => toast.success("Webhook salvo")} className="mt-3 rounded-lg gradient-primary px-4 py-2 text-[12px] font-semibold text-white transition hover:brightness-110">Salvar webhook</button>
