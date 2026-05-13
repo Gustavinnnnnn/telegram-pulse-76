@@ -340,7 +340,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      purchase_dm_package: { Args: { _package_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "user"
