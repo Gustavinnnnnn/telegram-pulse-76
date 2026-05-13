@@ -65,7 +65,7 @@ function AdminRoot() {
       )}>
         <div className="flex h-14 items-center justify-between border-b border-border px-4">
           <div className="flex items-center gap-2">
-            <Logo size={28} />
+            <Logo size={44} />
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-primary">Admin</p>
               <p className="text-[10px] text-muted-foreground">Painel da plataforma</p>

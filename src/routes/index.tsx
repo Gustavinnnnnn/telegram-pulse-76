@@ -66,7 +66,7 @@ function LandingPage() {
       <header className="sticky top-0 z-40 border-b border-border/50 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
           <Link to="/" className="flex items-center gap-2.5" aria-label="Noctra">
-            <Logo size={34} />
+            <Logo size={56} />
             <Wordmark />
           </Link>
 
@@ -263,7 +263,7 @@ function LandingPage() {
 
       <footer className="border-t border-border/50 py-8">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 md:flex-row md:px-6">
-          <div className="flex items-center gap-2"><Logo size={26} /><Wordmark /></div>
+          <div className="flex items-center gap-2"><Logo size={42} /><Wordmark /></div>
           <p className="text-center text-[11px] text-muted-foreground">© 2026 Noctra. Plataforma independente para anúncios no Telegram.</p>
           <div className="flex gap-4 text-[11.5px] text-muted-foreground">
             <a href="#faq" className="hover:text-foreground">Dúvidas</a>
