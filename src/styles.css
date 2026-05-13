@@ -93,64 +93,64 @@
   50% { transform: translate(2%, -2%) scale(1.05); }
 }
 
-/* TeleAds — dark first, deeper than Telegram, mais saturado nas superfícies */
+/* Noctra — preto profundo, roxo elétrico e branco. */
 :root {
   --radius: 0.875rem;
 
-  --background: oklch(0.155 0.02 240);          /* #0A1119 */
-  --foreground: oklch(0.97 0.008 230);
+  --background: oklch(0.11 0.01 300);           /* near-black with violet hint */
+  --foreground: oklch(0.98 0.005 300);
 
-  --surface-1: oklch(0.195 0.022 238);          /* #0F1A24 */
-  --surface-2: oklch(0.235 0.026 236);          /* #162433 */
-  --surface-3: oklch(0.295 0.032 233);          /* #1E3247 */
+  --surface-1: oklch(0.155 0.018 300);
+  --surface-2: oklch(0.195 0.025 300);
+  --surface-3: oklch(0.245 0.035 300);
 
-  --card: oklch(0.215 0.024 238);
-  --card-foreground: oklch(0.97 0.008 230);
+  --card: oklch(0.175 0.022 300);
+  --card-foreground: oklch(0.98 0.005 300);
 
-  --popover: oklch(0.235 0.026 236);
-  --popover-foreground: oklch(0.97 0.008 230);
+  --popover: oklch(0.195 0.025 300);
+  --popover-foreground: oklch(0.98 0.005 300);
 
-  --primary: oklch(0.69 0.15 230);              /* Telegram blue boosted */
+  --primary: oklch(0.58 0.24 305);              /* Noctra purple */
   --primary-foreground: oklch(1 0 0);
-  --primary-glow: oklch(0.8 0.13 220);
+  --primary-glow: oklch(0.72 0.22 310);
 
-  --cyan: oklch(0.84 0.16 178);                 /* mint/cyan accent */
-  --magenta: oklch(0.7 0.22 330);
+  --cyan: oklch(0.72 0.22 310);                 /* aliased to purple-glow for chart accents */
+  --magenta: oklch(0.62 0.27 320);
 
-  --secondary: oklch(0.27 0.025 236);
-  --secondary-foreground: oklch(0.97 0.008 230);
+  --secondary: oklch(0.25 0.04 300);
+  --secondary-foreground: oklch(0.98 0.005 300);
 
-  --muted: oklch(0.235 0.022 236);
-  --muted-foreground: oklch(0.62 0.02 235);
+  --muted: oklch(0.21 0.025 300);
+  --muted-foreground: oklch(0.66 0.025 300);
 
-  --accent: oklch(0.32 0.04 232);
-  --accent-foreground: oklch(0.97 0.008 230);
+  --accent: oklch(0.32 0.08 305);
+  --accent-foreground: oklch(0.98 0.005 300);
 
   --destructive: oklch(0.66 0.22 22);
   --destructive-foreground: oklch(1 0 0);
 
-  --success: oklch(0.78 0.18 158);              /* #2EE6B6 vibe */
-  --success-foreground: oklch(0.12 0.02 240);
+  --success: oklch(0.78 0.18 158);
+  --success-foreground: oklch(0.12 0.02 300);
 
-  --warning: oklch(0.78 0.17 60);               /* #FF8A3D */
-  --warning-foreground: oklch(0.15 0.02 240);
+  --warning: oklch(0.78 0.17 60);
+  --warning-foreground: oklch(0.15 0.02 300);
 
-  --border: oklch(0.3 0.02 236 / 0.6);
-  --border-strong: oklch(0.38 0.025 234);
-  --input: oklch(0.235 0.022 236);
-  --ring: oklch(0.69 0.15 230);
+  --border: oklch(0.32 0.04 305 / 0.55);
+  --border-strong: oklch(0.42 0.06 305);
+  --input: oklch(0.21 0.03 300);
+  --ring: oklch(0.58 0.24 305);
 
-  --sidebar: oklch(0.175 0.02 238);
-  --sidebar-foreground: oklch(0.92 0.01 235);
-  --sidebar-border: oklch(0.28 0.02 236 / 0.6);
-  --sidebar-accent: oklch(0.3 0.04 232);
-  --sidebar-accent-foreground: oklch(0.97 0.008 230);
+  --sidebar: oklch(0.13 0.018 300);
+  --sidebar-foreground: oklch(0.94 0.008 300);
+  --sidebar-border: oklch(0.3 0.04 305 / 0.55);
+  --sidebar-accent: oklch(0.3 0.08 305);
+  --sidebar-accent-foreground: oklch(0.98 0.005 300);
 
-  --chart-1: oklch(0.69 0.15 230);
-  --chart-2: oklch(0.78 0.18 158);
+  --chart-1: oklch(0.58 0.24 305);
+  --chart-2: oklch(0.72 0.22 310);
   --chart-3: oklch(0.78 0.17 60);
-  --chart-4: oklch(0.7 0.22 330);
-  --chart-5: oklch(0.66 0.22 22);
+  --chart-4: oklch(0.62 0.27 320);
+  --chart-5: oklch(0.78 0.18 158);
 }
 
 .dark { color-scheme: dark; }

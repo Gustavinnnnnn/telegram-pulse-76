@@ -55,10 +55,10 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
-      { title: "TeleAds — Plataforma de Anúncios para Telegram" },
+      { title: "Noctra — Plataforma de Anúncios para Telegram" },
       { name: "description", content: "Crie, gerencie e otimize campanhas de anúncios no Telegram com métricas em tempo real." },
-      { property: "og:title", content: "TeleAds — Plataforma de Anúncios para Telegram" },
-      { name: "twitter:title", content: "TeleAds — Plataforma de Anúncios para Telegram" },
+      { property: "og:title", content: "Noctra — Plataforma de Anúncios para Telegram" },
+      { name: "twitter:title", content: "Noctra — Plataforma de Anúncios para Telegram" },
       { property: "og:description", content: "Crie, gerencie e otimize campanhas de anúncios no Telegram com métricas em tempo real." },
       { name: "twitter:description", content: "Crie, gerencie e otimize campanhas de anúncios no Telegram com métricas em tempo real." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/85ee3a2e-b4c8-47f0-82e9-972f2b5c4829/id-preview-831e87a6--3f164f0d-eb76-4b26-a09b-f90951ebe76d.lovable.app-1778501270567.png" },
