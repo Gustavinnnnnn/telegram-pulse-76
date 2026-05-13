@@ -128,17 +128,5 @@ export function usePurchases() {
   });
 }
 
-export function usePurchasePackage() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (packageId: string) => {
-      const { data, error } = await supabase.rpc("purchase_dm_package", { _package_id: packageId });
-      if (error) throw error;
-      return data as { purchase_id: string; quantity: number };
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["profile"] });
-      qc.invalidateQueries({ queryKey: ["purchases"] });
-    },
-  });
-}
+// Direct package purchase removed: all credit purchases must go through the
+// PIX flow (/api/public/paradise-create + webhook) to avoid bypass exploits.
