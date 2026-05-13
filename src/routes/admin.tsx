@@ -10,6 +10,7 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 export const Route = createFileRoute("/admin")({
   component: AdminRoot,
+  head: () => ({ meta: [{ name: "robots", content: "noindex, nofollow" }, { title: "Não encontrado" }] }),
 });
 
 const ADMIN_NAV = [
@@ -36,22 +37,10 @@ function AdminRoot() {
   useEffect(() => { setOpen(false); }, [pathname]);
 
   if (loading || isAdmin === null) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Verificando acesso…</div>;
+    return <NotFoundShell />;
   }
-  if (!user) {
-    return <AdminLogin />;
-  }
-  if (!isAdmin) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
-        <Shield className="h-10 w-10 text-destructive" />
-        <h1 className="text-xl font-bold">Acesso negado</h1>
-        <p className="text-sm text-muted-foreground">Esta conta não tem permissão de administrador.</p>
-        <button onClick={() => signOut()} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
-          Entrar com outra conta
-        </button>
-      </div>
-    );
+  if (!user || !isAdmin) {
+    return <NotFoundShell />;
   }
 
   const isActive = (to: string, end?: boolean) => end ? pathname === to : pathname === to || pathname.startsWith(to + "/");
