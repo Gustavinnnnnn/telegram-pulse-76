@@ -126,14 +126,11 @@ function AdminSettings() {
         </div>
       </div>
 
+      <WhatsAppLinkEditor />
+
       <div className="rounded-xl border border-border bg-card p-5">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Canais de suporte</h2>
+        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Outros canais</h2>
         <div className="mt-3 grid gap-3 text-[13px] sm:grid-cols-2">
-          <div className="rounded-lg border border-[#25D366]/30 bg-[#25D366]/5 p-3">
-            <div className="flex items-center gap-2 text-[#25D366]"><MessageCircle className="h-4 w-4" /><span className="font-bold">Grupo WhatsApp</span></div>
-            <p className="mt-1 break-all font-mono text-[11px] text-muted-foreground">{SUPPORT.whatsappGroupUrl}</p>
-            <p className="mt-2 text-[11px] text-muted-foreground">Edite em <code className="rounded bg-surface-2 px-1">src/lib/support.ts</code></p>
-          </div>
           <div className="rounded-lg border border-border bg-surface-1/50 p-3 opacity-60">
             <div className="flex items-center gap-2"><MessageCircle className="h-4 w-4" /><span className="font-bold">Discord</span></div>
             <p className="mt-1 text-[11px] text-muted-foreground">Em breve</p>
