@@ -163,3 +163,53 @@ function Row({ label, value, mono }: { label: string; value: string; mono?: bool
     </div>
   );
 }
+
+function WhatsAppLinkEditor() {
+  const current = useWhatsAppUrl();
+  const update = useUpdateWhatsAppUrl();
+  const [value, setValue] = useState(current);
+
+  useEffect(() => { setValue(current); }, [current]);
+
+  const dirty = value.trim() !== current;
+  const valid = /^https:\/\/chat\.whatsapp\.com\//.test(value.trim());
+
+  const save = async () => {
+    if (!valid) { toast.error("Link inválido. Use https://chat.whatsapp.com/..."); return; }
+    try {
+      await update.mutateAsync(value.trim());
+      toast.success("Link do WhatsApp atualizado");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar");
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-[#25D366]/30 bg-[#25D366]/5 p-5">
+      <div className="flex items-center gap-2 text-[#25D366]">
+        <MessageCircle className="h-4 w-4" />
+        <h2 className="text-sm font-bold uppercase tracking-wider">Link do grupo WhatsApp</h2>
+      </div>
+      <p className="mt-1 text-[12px] text-muted-foreground">
+        Esse link é usado no botão flutuante e em todos os botões de suporte do site. Atualize aqui sempre que trocar o grupo.
+      </p>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="https://chat.whatsapp.com/XXXXXXXX"
+          className="flex-1 rounded-md border border-border bg-input/50 px-3 py-2 font-mono text-[12px] outline-none focus:border-primary"
+        />
+        <button
+          onClick={save}
+          disabled={!dirty || !valid || update.isPending}
+          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-[#25D366] px-4 py-2 text-[12px] font-bold text-white hover:brightness-110 disabled:opacity-50"
+        >
+          {update.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+          Salvar
+        </button>
+      </div>
+      <p className="mt-2 break-all font-mono text-[11px] text-muted-foreground">Atual: {current}</p>
+    </div>
+  );
+}
