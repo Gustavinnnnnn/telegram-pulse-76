@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { SUPPORT } from "@/lib/support";
+import { useWhatsAppUrl } from "@/lib/settings";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
@@ -30,10 +31,11 @@ export function WhatsAppButton({
     pill: "rounded-full bg-[#25D366]/15 text-[#25D366] hover:bg-[#25D366]/25 border border-[#25D366]/30",
   } as const;
   const iconSize = size === "sm" ? "h-3.5 w-3.5" : size === "lg" ? "h-5 w-5" : "h-4 w-4";
+  const url = useWhatsAppUrl();
 
   return (
     <a
-      href={SUPPORT.whatsappGroupUrl}
+      href={url}
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
@@ -51,9 +53,10 @@ export function WhatsAppButton({
 
 // Floating action button — para colocar fixo em qualquer tela
 export function WhatsAppFab() {
+  const url = useWhatsAppUrl();
   return (
     <a
-      href={SUPPORT.whatsappGroupUrl}
+      href={url}
       target="_blank"
       rel="noopener noreferrer"
       title={SUPPORT.whatsappLabel}
