@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Users, Receipt, Settings as SettingsIcon, LogOut, Menu, X, Shield, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Users, Receipt, Settings as SettingsIcon, LogOut, Menu, X, Shield, ArrowLeft, LockKeyhole } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -36,10 +36,10 @@ function AdminRoot() {
   useEffect(() => { setOpen(false); }, [pathname]);
 
   if (loading || isAdmin === null) {
-    return <NotFoundShell />;
+    return <AdminAccessShell title="Carregando painel..." description="Verificando sua sessão de administrador." />;
   }
   if (!user || !isAdmin) {
-    return <NotFoundShell />;
+    return <AdminAccessShell signedIn={Boolean(user)} email={user?.email ?? undefined} />;
   }
 
   const isActive = (to: string, end?: boolean) => end ? pathname === to : pathname === to || pathname.startsWith(to + "/");
@@ -105,15 +105,37 @@ function AdminRoot() {
   );
 }
 
-function NotFoundShell() {
+function AdminAccessShell({
+  title,
+  description,
+  signedIn = false,
+  email,
+}: {
+  title?: string;
+  description?: string;
+  signedIn?: boolean;
+  email?: string;
+}) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-gradient-primary">404</h1>
-        <h2 className="mt-4 text-xl font-semibold">Página não encontrada</h2>
-        <Link to="/" className="mt-6 inline-flex items-center justify-center rounded-xl gradient-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110">
-          Voltar
-        </Link>
+      <div className="card-elevated w-full max-w-md p-6 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+          <LockKeyhole className="h-7 w-7" />
+        </div>
+        <h1 className="mt-5 text-2xl font-bold">{title ?? (signedIn ? "Acesso administrativo pendente" : "Entrar no painel admin")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {description ?? (signedIn
+            ? `Você está logado${email ? ` como ${email}` : ""}, mas essa conta ainda não tem permissão de administrador.`
+            : "Faça login com a conta que tem permissão de administrador para abrir o painel.")}
+        </p>
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+          <Link to="/auth" className="inline-flex items-center justify-center rounded-xl gradient-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110">
+            Entrar
+          </Link>
+          <Link to="/" className="inline-flex items-center justify-center rounded-xl border border-border bg-surface-1 px-5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-surface-2">
+            Voltar ao site
+          </Link>
+        </div>
       </div>
     </div>
   );
